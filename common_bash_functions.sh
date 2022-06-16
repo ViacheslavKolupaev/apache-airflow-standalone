@@ -660,3 +660,79 @@ function activate_virtual_environment() {
     log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
   fi
 }
+
+#######################################
+# Copy a file from the specified branch of the remote Git repo to the script directory.
+#
+# Paths to the file in the target directory are preserved during copying.
+#
+# Usage example:
+#  # shellcheck source=./copy_file_from_remote_git_repo.sh
+#  if ! source ./copy_file_from_remote_git_repo.sh; then
+#    echo "'copy_file_from_remote_git_repo.sh' module was not imported due to some error. Exit."
+#    exit 1
+#  else
+#    copy_file_from_remote_git_repo \
+#      'git@gitlab.com:vkolupaev/notebook.git' \
+#      'main' \
+#      'common_bash_functions.sh'
+#  fi
+#
+# Globals:
+#   PWD
+# Arguments:
+#  remote_git_repo
+#  branch_name
+#  path_to_file
+#######################################
+function copy_file_from_remote_git_repo() {
+  echo ''
+  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
+
+  # Checking function arguments.
+  if [ -z "$1" ] ; then
+    log_to_stderr "Argument 'remote_git_repo' was not specified in the function call. Exit."
+    exit 1
+  else
+    local remote_git_repo
+    remote_git_repo=$1
+    readonly remote_git_repo
+    log_to_stdout "Argument 'remote_git_repo' = ${remote_git_repo}"
+  fi
+
+  if [ -z "$2" ] ; then
+    log_to_stderr "Argument 'branch_name' was not specified in the function call. Exit."
+    exit 1
+  else
+    local branch_name
+    branch_name=$2
+    readonly branch_name
+    log_to_stdout "Argument 'branch_name' = ${branch_name}"
+  fi
+
+  if [ -z "$3" ] ; then
+    log_to_stderr "Argument 'path_to_file' was not specified in the function call. Exit."
+    exit 1
+  else
+    local path_to_file
+    path_to_file=$3
+    readonly path_to_file
+    log_to_stdout "Argument 'path_to_file' = ${path_to_file}"
+  fi
+
+  # Copying.
+  log_to_stdout "Copying '${path_to_file}' file from remote Git repository '${remote_git_repo}'..."
+  if ! git archive \
+      --remote=${remote_git_repo} \
+      --verbose \
+      "${branch_name}" \
+      "${path_to_file}" | tar -x; then
+    log_to_stderr "Error copying '${path_to_file}' from '${remote_git_repo}'. Contact the maintainer. Exit."
+    exit 1
+  else
+    log_to_stdout "'${path_to_file}' file successfully copied from '${remote_git_repo}'." 'G'
+    log_to_stdout "Current PWD: '${PWD}'."
+  fi
+
+  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
+}
