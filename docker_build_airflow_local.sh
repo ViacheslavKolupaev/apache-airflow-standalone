@@ -49,26 +49,20 @@
 
 
 #######################################
-# Import bash libraries.
+# Update library of common bash functions.
 # Arguments:
 #  None
 #######################################
-function import_bash_libraries() {
-  # shellcheck source=./copy_file_from_remote_git_repo.sh
-  if ! source ./copy_file_from_remote_git_repo.sh; then
-    echo "'copy_file_from_remote_git_repo.sh' module was not imported due to some error. Exit."
+function update_library_of_common_bash_functions() {
+  # shellcheck source=./common_bash_functions.sh
+  if ! source ./common_bash_functions.sh; then
+    echo "'common_bash_functions.sh' module was not imported due to some error. Exit."
     exit 1
   else
     copy_file_from_remote_git_repo \
       'git@gitlab.com:vkolupaev/notebook.git' \
       'main' \
       'common_bash_functions.sh'
-  fi
-
-  # shellcheck source=./common_bash_functions.sh
-  if ! source ./common_bash_functions.sh; then
-    echo "'common_bash_functions.sh' module was not imported due to some error. Exit."
-    exit 1
   fi
 }
 
@@ -188,8 +182,8 @@ function main() {
   docker_image_tag="${airflow_version}-${python_base_image}"  # don't change
   readonly docker_image_tag
 
-  # 2. Import bash functions from other scripts.
-  import_bash_libraries "$@"
+  # 2. Update and import the library of common bash functions.
+  update_library_of_common_bash_functions "$@"
 
   # 3. Execution of script logic.
   log_to_stdout 'START SCRIPT EXECUTION.' 'Bl'
