@@ -49,6 +49,30 @@
 
 
 #######################################
+# Import bash libraries.
+# Arguments:
+#  None
+#######################################
+function import_bash_libraries() {
+  # shellcheck source=./copy_file_from_remote_git_repo.sh
+  if ! source ./copy_file_from_remote_git_repo.sh; then
+    echo "'copy_file_from_remote_git_repo.sh' module was not imported due to some error. Exit."
+    exit 1
+  else
+    copy_file_from_remote_git_repo \
+      'git@gitlab.com:vkolupaev/notebook.git' \
+      'main' \
+      'common_bash_functions.sh'
+  fi
+
+  # shellcheck source=./common_bash_functions.sh
+  if ! source ./common_bash_functions.sh; then
+    echo "'common_bash_functions.sh' module was not imported due to some error. Exit."
+    exit 1
+  fi
+}
+
+#######################################
 # Build a standalone Apache Airflow docker image.
 # Arguments:
 #   docker_image_name
@@ -165,23 +189,7 @@ function main() {
   readonly docker_image_tag
 
   # 2. Import bash functions from other scripts.
-
-  # shellcheck source=./copy_file_from_remote_git_repo.sh
-  if ! source ./copy_file_from_remote_git_repo.sh; then
-    echo "'copy_file_from_remote_git_repo.sh' module was not imported due to some error. Exit."
-    exit 1
-  else
-    copy_file_from_remote_git_repo \
-      'git@gitlab.com:vkolupaev/notebook.git' \
-      'main' \
-      'common_bash_functions.sh'
-  fi
-
-  # shellcheck source=./common_bash_functions.sh
-  if ! source ./common_bash_functions.sh; then
-    echo "'common_bash_functions.sh' module was not imported due to some error. Exit."
-    exit 1
-  fi
+  import_bash_libraries "$@"
 
   # 3. Execution of script logic.
   log_to_stdout 'START SCRIPT EXECUTION.' 'Bl'
