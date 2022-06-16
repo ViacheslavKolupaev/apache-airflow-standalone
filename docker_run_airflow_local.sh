@@ -170,6 +170,12 @@ function docker_run_standalone_airflow_in_container() {
 #######################################
 function main() {
   # 1. Declaring Local Variables.
+  local docker_registry
+  readonly docker_registry='docker.io'
+
+  local docker_user_name
+  readonly docker_user_name='vkolupaev'
+
   local airflow_dags_dir
   airflow_dags_dir="${HOME}/PycharmProjects/apache-airflow-standalone/dags"  # change the path if necessary
   readonly airflow_dags_dir
@@ -195,6 +201,10 @@ function main() {
 
   # Execute Docker operations.
   check_if_docker_is_running "$@"
+    docker_login_to_registry \
+    "${docker_registry}" \
+    "${docker_user_name}"
+
   docker_stop_and_remove_containers_by_name "${docker_image_name}-${docker_image_tag}"
   docker_stop_and_remove_containers_by_ancestor \
     "${docker_image_name}" \
