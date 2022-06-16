@@ -19,6 +19,7 @@
 ##########################################################################################
 
 # Pull official base image.
+# See available Apache Airflow tags here: https://hub.docker.com/r/apache/airflow/tags
 ARG AIRFLOW_VERSION
 ARG PYTHON_BASE_IMAGE
 
@@ -38,18 +39,18 @@ USER root
 
 # Installing some auxiliary utilities, including those for working with Apache Spark.
 # Docs: https://manpages.ubuntu.com/manpages/focal/en/man8/apt-get.8.html
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-    iputils-ping \
-    net-tools \
-    less \
-    telnet \
-    vim\
-    mc \
-    openjdk-11-jre-headless \
-  && apt-get autoremove -yqq --purge \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+#RUN apt-get update \
+#  && apt-get install -y --no-install-recommends \
+#    iputils-ping \
+#    net-tools \
+#    less \
+#    telnet \
+#    vim\
+#    mc \
+#    openjdk-11-jre-headless \
+#  && apt-get autoremove -yqq --purge \
+#  && apt-get clean \
+#  && rm -rf /var/lib/apt/lists/*
 
 USER airflow
 
