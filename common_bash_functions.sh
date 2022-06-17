@@ -406,8 +406,8 @@ function docker_login_to_registry() {
 #######################################
 function docker_push_image_to_registry() {
   echo ''
-  log_to_stdout 'Tagging and pushing a Docker image to a private registry...'
   log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
+  log_to_stdout 'Tagging and pushing a Docker image to a private registry...'
 
   # Checking function arguments.
   if [ -z "$1" ] ; then
