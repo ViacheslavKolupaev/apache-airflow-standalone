@@ -18,13 +18,20 @@
 # Not suitable for production environment. Use it for local development and testing only!
 ##########################################################################################
 
+# See dockerfile syntax tags here: https://hub.docker.com/r/docker/dockerfile
+# syntax = docker/dockerfile:1.4
+
+########
+# BUILD
+########
+
 # Pull official base image.
 # See available Apache Airflow tags here: https://hub.docker.com/r/apache/airflow/tags
 ARG AIRFLOW_VERSION
 ARG PYTHON_BASE_IMAGE
 
 # The final image, will appear as `image_name:image_tag` (`docker build -t` option)
-FROM apache/airflow:${AIRFLOW_VERSION}-${PYTHON_BASE_IMAGE}
+FROM apache/airflow:${AIRFLOW_VERSION}-${PYTHON_BASE_IMAGE} AS build-image
 
 # Setting the git revision short SHA.
 ARG VCS_REF
@@ -39,7 +46,8 @@ USER root
 
 # Installing some auxiliary utilities, including those for working with Apache Spark.
 # Docs: https://manpages.ubuntu.com/manpages/focal/en/man8/apt-get.8.html
-#RUN apt-get update \
+#RUN --mount=type=cache,mode=0755,target=/var/cache/apt \
+#  apt-get update \
 #  && apt-get install -y --no-install-recommends \
 #    iputils-ping \
 #    net-tools \
@@ -68,5 +76,6 @@ ENV PIP_CONFIG_FILE pip.conf
 
 # Install Python dependencies.
 COPY --chown=airflow:root ./requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
+    pip install --upgrade pip \
+    && pip install -r requirements.txt
