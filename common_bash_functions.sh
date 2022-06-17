@@ -44,6 +44,18 @@ function log_to_stdout() {
   caller_filename_lineno="${BASH_SOURCE[1]##*/}:${BASH_LINENO[0]}"
   readonly caller_filename_lineno
 
+  # The name of the function that called this function.
+  local caller_func_name
+  # Checking if the function was called from this or an external script.
+  if [ -z "${FUNCNAME[1]}" ] ; then
+    # In case the call is made from this script.
+    caller_func_name="${FUNCNAME[0]}"
+  else
+    # If the call is made from an external script.
+    caller_func_name="${FUNCNAME[1]}"
+  fi
+  readonly caller_func_name
+
   # Variables for the allowed text color of the log message.
   local fg_black
   local fg_red
@@ -122,14 +134,13 @@ function log_to_stdout() {
 
   readonly text_color
 
-  # Checking if the function was called from this or an external script.
-  if [ -z "${FUNCNAME[1]}" ] ; then
-    # In case the call is made from this script.
-    printf "${text_color}| ${timestamp} | ${caller_filename_lineno} | ${FUNCNAME[0]} | ${text_message}\n" >&1
-  else
-    # If the call is made from an external script.
-    printf "${text_color}| ${timestamp} | ${caller_filename_lineno} | ${FUNCNAME[1]} | ${text_message}\n" >&1
-  fi
+  # 3. Print a formatted text message.
+  printf "${text_color}| %s | %s | %s | %s\n" \
+    >&1 `# stdout` \
+    "${timestamp}" \
+    "${caller_filename_lineno}" \
+    "${caller_func_name}" \
+    "${text_message}"
 }
 
 #######################################
@@ -154,23 +165,46 @@ function log_to_stderr() {
   caller_filename_lineno="${BASH_SOURCE[1]##*/}:${BASH_LINENO[0]}"
   readonly caller_filename_lineno
 
+  # The name of the function that called this function.
+  local caller_func_name
+  # Checking if the function was called from this or an external script.
+  if [ -z "${FUNCNAME[1]}" ] ; then
+    # In case the call is made from this script.
+    caller_func_name="${FUNCNAME[0]}"
+  else
+    # If the call is made from an external script.
+    caller_func_name="${FUNCNAME[1]}"
+  fi
+  readonly caller_func_name
+
+  # Text color variable.
+  local text_color
+  text_color=$(tput setaf 1)  # Red.
+  readonly text_color
+
   # 2. Checking function arguments.
   local text_message
   if [ -z "$1" ] ; then
     text_message="Argument 'text_message' was not specified in the function call. Exit."
-    printf "$(tput setaf 1)| ${timestamp} | ${caller_filename_lineno} | ${FUNCNAME[0]} | ${text_message}\n" >&2
+    printf "${text_color}| %s | %s | %s | %s\n" \
+      >&2 `# stderr` \
+      "${timestamp}" \
+      "${caller_filename_lineno}" \
+      "${caller_func_name}" \
+      "${text_message}"
     exit 1
   else
     text_message=$1
     readonly text_message
   fi
 
-  # 3. Execution of function logic.
-  if [ -z "${FUNCNAME[1]}" ] ; then
-    printf "$(tput setaf 1)| ${timestamp} | ${caller_filename_lineno} | ${FUNCNAME[0]} | ${text_message}\n" >&2
-  else
-    printf "$(tput setaf 1)| ${timestamp} | ${caller_filename_lineno} | ${FUNCNAME[1]} | ${text_message}\n" >&2
-  fi
+  # 3. Print a formatted text message.
+  printf "${text_color}| %s | %s | %s | %s\n" \
+    >&2 `# stderr` \
+    "${timestamp}" \
+    "${caller_filename_lineno}" \
+    "${caller_func_name}" \
+    "${text_message}"
 }
 
 #######################################
@@ -709,7 +743,7 @@ function copy_file_from_remote_git_repo() {
   # Copying.
   log_to_stdout "Copying '${path_to_file}' file from remote Git repository '${remote_git_repo}'..."
   if ! git archive \
-      --remote=${remote_git_repo} \
+      --remote="${remote_git_repo}" \
       --verbose \
       "${branch_name}" \
       "${path_to_file}" | tar -x; then
