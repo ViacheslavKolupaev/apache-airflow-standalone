@@ -125,7 +125,7 @@ function docker_run_standalone_airflow_in_container() {
     --restart=no \
     --log-driver=local `# https://docs.docker.com/config/containers/logging/local/` \
     --log-opt mode=non-blocking \
-    --network="${docker_image_name}-net" \
+    --network="${docker_image_name}"-net \
     --publish 8080:8080 \
     --cpus="2" \
     --memory-reservation=3g \
