@@ -133,7 +133,7 @@ function docker_build_standalone_airflow_image() {
 
   # Get the short SHA of the current Git revision.
   local git_rev_short_sha
-  git_rev_short_sha="$(git rev-parse --short HEAD)"
+  git_rev_short_sha="$(git -C ${dockerfile_dir} rev-parse --short HEAD)"
   log_to_stdout "git_rev_short_sha: ${git_rev_short_sha}"
 
   # Building a Docker image.
