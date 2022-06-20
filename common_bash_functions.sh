@@ -184,7 +184,7 @@ function log_to_stderr() {
 
   # 2. Checking function arguments.
   local text_message
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] ; then
     text_message="Argument 'text_message' was not specified in the function call. Exit."
     printf "${text_color}| %s | %s | %s | %s\n" \
       >&2 `# stderr` \
@@ -235,7 +235,7 @@ function docker_container_stop() {
   echo ''
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'container_id_or_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -263,7 +263,7 @@ function docker_container_remove() {
   echo ''
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'container_id_or_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -291,7 +291,7 @@ function docker_image_remove() {
   echo ''
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'image_id_or_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -322,7 +322,7 @@ function docker_image_remove_by_name_tag() {
   log_to_stdout 'Removing Docker image by <name>:<tag>...'
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -332,7 +332,7 @@ function docker_image_remove_by_name_tag() {
     log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}"
   fi
 
-  if [ -z "$2" ] ; then
+  if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_tag' was not specified in the function call. Exit."
     exit 1
   else
@@ -365,7 +365,7 @@ function docker_login_to_registry() {
   log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_registry' was not specified in the function call. Exit."
     exit 1
   else
@@ -375,7 +375,7 @@ function docker_login_to_registry() {
     log_to_stdout "Argument 'docker_registry' = ${docker_registry}"
   fi
 
-  if [ -z "$2" ] ; then
+  if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_user_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -410,7 +410,7 @@ function docker_push_image_to_registry() {
   log_to_stdout 'Tagging and pushing a Docker image to a private registry...'
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_registry' was not specified in the function call. Exit."
     exit 1
   else
@@ -420,7 +420,7 @@ function docker_push_image_to_registry() {
     log_to_stdout "Argument 'docker_registry' = ${docker_registry}"
   fi
 
-  if [ -z "$2" ] ; then
+  if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_user_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -430,7 +430,7 @@ function docker_push_image_to_registry() {
     log_to_stdout "Argument 'docker_user_name' = ${docker_user_name}"
   fi
 
-  if [ -z "$3" ] ; then
+  if [ -z "$3" ] || [ "$3" = '' ] || [[ "$3" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -440,7 +440,7 @@ function docker_push_image_to_registry() {
     log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}"
   fi
 
-  if [ -z "$4" ] ; then
+  if [ -z "$4" ] || [ "$4" = '' ] || [[ "$4" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_tag' was not specified in the function call. Exit."
     exit 1
   else
@@ -487,7 +487,7 @@ function docker_stop_and_remove_containers_by_name() {
   log_to_stdout 'Stopping and removing containers with a name equal to the image name...'
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -531,7 +531,7 @@ function docker_stop_and_remove_containers_by_ancestor() {
   log_to_stdout 'Stopping and removing containers created from the <name>:<tag>...'
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -541,7 +541,7 @@ function docker_stop_and_remove_containers_by_ancestor() {
     log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}"
   fi
 
-  if [ -z "$2" ] ; then
+  if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_tag' was not specified in the function call. Exit."
     exit 1
   else
@@ -584,7 +584,7 @@ function docker_create_user_defined_bridge_network() {
   log_to_stdout 'Creating user-defined bridge network...'
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -622,7 +622,7 @@ function sync_venv_with_specified_requirements_files() {
   log_to_stdout "Synchronizing the project's virtual environment with the specified requirements files..."
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'req_compiled_file_full_path' was not specified in the function call. Exit."
     exit 1
   else
@@ -671,7 +671,7 @@ function activate_virtual_environment() {
   log_to_stdout "Activating the project's virtual environment..."
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'venv_scripts_dir_full_path' was not specified in the function call. Exit."
     exit 1
   else
@@ -710,7 +710,7 @@ function copy_file_from_remote_git_repo() {
   log_to_stdout 'Paths to the file in the target directory are preserved during copying.' 'C'
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'remote_git_repo' was not specified in the function call. Exit."
     exit 1
   else
@@ -720,7 +720,7 @@ function copy_file_from_remote_git_repo() {
     log_to_stdout "Argument 'remote_git_repo' = ${remote_git_repo}"
   fi
 
-  if [ -z "$2" ] ; then
+  if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
     log_to_stderr "Argument 'branch_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -730,7 +730,7 @@ function copy_file_from_remote_git_repo() {
     log_to_stdout "Argument 'branch_name' = ${branch_name}"
   fi
 
-  if [ -z "$3" ] ; then
+  if [ -z "$3" ] || [ "$3" = '' ] || [[ "$3" = *' '* ]] ; then
     log_to_stderr "Argument 'path_to_file' was not specified in the function call. Exit."
     exit 1
   else
