@@ -81,7 +81,7 @@ function docker_build_standalone_airflow_image() {
   log_to_stdout "Building a standalone Apache Airflow Docker image..."
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -91,7 +91,7 @@ function docker_build_standalone_airflow_image() {
     log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}"
   fi
 
-  if [ -z "$2" ] ; then
+  if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_tag' was not specified in the function call. Exit."
     exit 1
   else
@@ -101,7 +101,7 @@ function docker_build_standalone_airflow_image() {
     log_to_stdout "Argument 'docker_image_tag' = ${docker_image_tag}"
   fi
 
-  if [ -z "$3" ] ; then
+  if [ -z "$3" ] || [ "$3" = '' ] || [[ "$3" = *' '* ]] ; then
     log_to_stderr "Argument 'dockerfile_dir' was not specified in the function call. Exit."
     exit 1
   else
@@ -111,7 +111,7 @@ function docker_build_standalone_airflow_image() {
     log_to_stdout "Argument 'dockerfile_dir' = ${dockerfile_dir}"
   fi
 
-  if [ -z "$4" ] ; then
+  if [ -z "$4" ] || [ "$4" = '' ] || [[ "$4" = *' '* ]] ; then
     log_to_stderr "Argument 'airflow_version' was not specified in the function call. Exit."
     exit 1
   else
@@ -121,7 +121,7 @@ function docker_build_standalone_airflow_image() {
     log_to_stdout "Argument 'airflow_version' = ${airflow_version}"
   fi
 
-  if [ -z "$5" ] ; then
+  if [ -z "$5" ] || [ "$5" = '' ] || [[ "$5" = *' '* ]] ; then
     log_to_stderr "Argument 'python_base_image' was not specified in the function call. Exit."
     exit 1
   else

@@ -86,7 +86,7 @@ function docker_run_standalone_airflow_in_container() {
   log_to_stdout 'Running standalone Apache Airflow in Docker container...'
 
   # Checking function arguments.
-  if [ -z "$1" ] ; then
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_name' was not specified in the function call. Exit."
     exit 1
   else
@@ -96,7 +96,7 @@ function docker_run_standalone_airflow_in_container() {
     log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}"
   fi
 
-  if [ -z "$2" ] ; then
+  if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
     log_to_stderr "Argument 'docker_image_tag' was not specified in the function call. Exit."
     exit 1
   else
@@ -106,7 +106,7 @@ function docker_run_standalone_airflow_in_container() {
     log_to_stdout "Argument 'docker_image_tag' = ${docker_image_tag}"
   fi
 
-  if [ -z "$3" ] ; then
+  if [ -z "$3" ] || [ "$3" = '' ] || [[ "$3" = *' '* ]] ; then
     log_to_stderr "Argument 'airflow_dags_dir' was not specified in the function call. Exit."
     exit 1
   else
