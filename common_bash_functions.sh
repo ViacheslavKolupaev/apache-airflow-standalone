@@ -1,7 +1,9 @@
 #!/bin/bash
 
 ##########################################################################################
-# Copyright (c) 2022. Viacheslav Kolupaev, https://vkolupaev.com/
+#  Copyright 2022 Viacheslav Kolupaev; author's website address:
+#
+#   https://vkolupaev.com/?utm_source=c&utm_medium=link&utm_campaign=notebook
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
 # file except in compliance with the License. You may obtain a copy of the License at
@@ -18,6 +20,9 @@
 # The script provides common bash functions.
 #
 # To use it, import it into your script with the `source` command.
+#
+# File in repo: https://gitlab.com/vkolupaev/notebook/-/blob/main/common_bash_functions.sh
+# Maintainer: Viacheslav Kolupaev
 ##########################################################################################
 
 
@@ -208,21 +213,169 @@ function log_to_stderr() {
 }
 
 #######################################
+# Synchronize the project's virtual environment with the specified requirements files.
+# Arguments:
+#   req_compiled_file_full_path: Required. The full path to the compiled dependency file, with which to sync.
+#   project_root: Optional. If specified, will additionally sync with `01_app_requirements.txt`.
+#######################################
+function sync_venv_with_specified_requirements_files() {
+  echo ''
+  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' "${c_se}"
+  log_to_stdout "Synchronizing the project's virtual environment with the specified requirements files..."
+
+  # Checking function arguments.
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
+    log_to_stderr "Argument 'req_compiled_file_full_path' was not specified in the function call. Exit."
+    exit 1
+  else
+    local req_compiled_file_full_path
+    req_compiled_file_full_path=$1
+    readonly req_compiled_file_full_path
+    log_to_stdout "Argument 'req_compiled_file_full_path' = ${req_compiled_file_full_path}" "${c_arg}"
+  fi
+
+  if [ -n "$2" ] ; then
+    local project_root
+    project_root=$2
+    readonly project_root
+    log_to_stdout "Argument 'project_root' = ${project_root}" "${c_arg}"
+    log_to_stdout "Requirements file 2 = ${project_root}/requirements/compiled/01_app_requirements.txt" "${c_arg}"
+
+    if ! pip-sync \
+        "${project_root}/requirements/compiled/01_app_requirements.txt" \
+        "${req_compiled_file_full_path}"; then
+      log_to_stderr 'Virtual environment synchronization error. Exit.'
+      exit 1
+    fi
+
+  else
+
+    if ! pip-sync "${req_compiled_file_full_path}"; then
+      log_to_stderr 'Virtual environment synchronization error. Exit.'
+      exit 1
+    fi
+
+  fi
+
+  log_to_stdout "The project virtual env was successfully synced with the specified requirements file(s)." "${c_ok}"
+  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' "${c_se}"
+}
+
+#######################################
+# Activate the project's virtual environment.
+# Globals:
+#   PWD
+# Arguments:
+#   venv_scripts_dir_full_path: Full path to the virtual environment scripts directory (depends on OS type).
+#######################################
+function activate_virtual_environment() {
+  echo ''
+  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' "${c_se}"
+  log_to_stdout "Activating the project's virtual environment..."
+
+  # Checking function arguments.
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
+    log_to_stderr "Argument 'venv_scripts_dir_full_path' was not specified in the function call. Exit."
+    exit 1
+  else
+    local venv_scripts_dir_full_path
+    venv_scripts_dir_full_path=$1
+    readonly venv_scripts_dir_full_path
+    log_to_stdout "Argument 'venv_scripts_dir_full_path' = ${venv_scripts_dir_full_path}" "${c_arg}"
+  fi
+
+  # Change to the directory with venv scripts.
+  cd "${venv_scripts_dir_full_path}" || exit 1
+  log_to_stdout "Current PWD: '${PWD}'."
+
+  # venv activation.
+  if ! source activate; then
+    log_to_stderr 'Virtual environment activation error. Exit.'
+    exit 1
+  else
+    log_to_stdout 'Virtual environment successfully activated. Continue.' "${c_ok}"
+    log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' "${c_se}"
+  fi
+}
+
+#######################################
+# Copy a file from the specified branch of the remote Git repo to the script directory.
+# Globals:
+#   PWD
+# Arguments:
+#  remote_git_repo
+#  branch_name
+#  path_to_file
+#######################################
+function copy_file_from_remote_git_repo() {
+  echo ''
+  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' "${c_se}"
+  log_to_stdout 'Paths to the file in the target directory are preserved during copying.' "${c_w}"
+
+  # Checking function arguments.
+  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
+    log_to_stderr "Argument 'remote_git_repo' was not specified in the function call. Exit."
+    exit 1
+  else
+    local remote_git_repo
+    remote_git_repo=$1
+    readonly remote_git_repo
+    log_to_stdout "Argument 'remote_git_repo' = ${remote_git_repo}" "${c_arg}"
+  fi
+
+  if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
+    log_to_stderr "Argument 'branch_name' was not specified in the function call. Exit."
+    exit 1
+  else
+    local branch_name
+    branch_name=$2
+    readonly branch_name
+    log_to_stdout "Argument 'branch_name' = ${branch_name}" "${c_arg}"
+  fi
+
+  if [ -z "$3" ] || [ "$3" = '' ] || [[ "$3" = *' '* ]] ; then
+    log_to_stderr "Argument 'path_to_file' was not specified in the function call. Exit."
+    exit 1
+  else
+    local path_to_file
+    path_to_file=$3
+    readonly path_to_file
+    log_to_stdout "Argument 'path_to_file' = ${path_to_file}" "${c_arg}"
+  fi
+
+  # Copying.
+  log_to_stdout "Copying '${path_to_file}' file from remote Git repository '${remote_git_repo}'..."
+  if ! git archive \
+      --remote="${remote_git_repo}" \
+      --verbose \
+      "${branch_name}" \
+      "${path_to_file}" | tar -x; then
+    log_to_stderr "Error copying '${path_to_file}' from '${remote_git_repo}'. Contact the maintainer. Exit."
+    exit 1
+  else
+    log_to_stdout "'${path_to_file}' file successfully copied from '${remote_git_repo}'." "${c_ok}"
+    log_to_stdout "Current PWD: '${PWD}'."
+  fi
+
+  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' "${c_se}"
+}
+
+#######################################
 # Check if Docker is running on the host.
 # Arguments:
 #  None
 #######################################
 function check_if_docker_is_running() {
   echo ''
-  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
+  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' "${c_se}"
   log_to_stdout 'Checking if Docker is running before executing Docker operations...'
 
   if (! docker stats --no-stream 2>/dev/null); then
     log_to_stderr 'Docker is not working. For the further work of the script, a working Docker is required. Exit.'
     exit 1
   else
-    log_to_stdout 'Docker is working. Continue.' 'G'
-    log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
+    log_to_stdout 'Docker is working. Continue.' "${c_ok}"
+    log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' "${c_se}"
   fi
 }
 
@@ -242,7 +395,7 @@ function docker_container_stop() {
     local container_id_or_name
     container_id_or_name=$1
     readonly container_id_or_name
-    log_to_stdout "Argument 'container_id_or_name' = ${container_id_or_name}"
+    log_to_stdout "Argument 'container_id_or_name' = ${container_id_or_name}" "${c_arg}"
   fi
 
   log_to_stdout "Stopping the '${container_id_or_name}' container..."
@@ -250,7 +403,7 @@ function docker_container_stop() {
     log_to_stderr "Error stopping container '${container_id_or_name}'. Exit."
     exit 1
   else
-    log_to_stdout "Container '${container_id_or_name}' stopped successfully. Continue." 'G'
+    log_to_stdout "Container '${container_id_or_name}' stopped successfully. Continue." "${c_ok}"
   fi
 }
 
@@ -270,7 +423,7 @@ function docker_container_remove() {
     local container_id_or_name
     container_id_or_name=$1
     readonly container_id_or_name
-    log_to_stdout "Argument 'container_id_or_name' = ${container_id_or_name}"
+    log_to_stdout "Argument 'container_id_or_name' = ${container_id_or_name}" "${c_arg}"
   fi
 
   log_to_stdout "Removing the '${container_id_or_name}' container..."
@@ -278,7 +431,7 @@ function docker_container_remove() {
     log_to_stderr "Error removing container '${container_id_or_name}'. Exit."
     exit 1
   else
-    log_to_stdout "Container '${container_id_or_name}' removed successfully. Continue." 'G'
+    log_to_stdout "Container '${container_id_or_name}' removed successfully. Continue." "${c_ok}"
   fi
 }
 
@@ -298,7 +451,7 @@ function docker_image_remove() {
     local image_id_or_name
     image_id_or_name=$1
     readonly image_id_or_name
-    log_to_stdout "Argument 'image_id_or_name' = ${image_id_or_name}"
+    log_to_stdout "Argument 'image_id_or_name' = ${image_id_or_name}" "${c_arg}"
   fi
 
   log_to_stdout "Removing the '${image_id_or_name}' image..."
@@ -306,7 +459,7 @@ function docker_image_remove() {
     log_to_stderr "Error removing image '${image_id_or_name}'. Exit."
     exit 1
   else
-    log_to_stdout "Image '${image_id_or_name}' removed successfully. Continue." 'G'
+    log_to_stdout "Image '${image_id_or_name}' removed successfully. Continue." "${c_ok}"
   fi
 }
 
@@ -318,7 +471,7 @@ function docker_image_remove() {
 #######################################
 function docker_image_remove_by_name_tag() {
   echo ''
-  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
+  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' "${c_se}"
   log_to_stdout 'Removing Docker image by <name>:<tag>...'
 
   # Checking function arguments.
@@ -329,7 +482,7 @@ function docker_image_remove_by_name_tag() {
     local docker_image_name
     docker_image_name=$1
     readonly docker_image_name
-    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}"
+    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}" "${c_arg}"
   fi
 
   if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
@@ -339,7 +492,7 @@ function docker_image_remove_by_name_tag() {
     local docker_image_tag
     docker_image_tag=$2
     readonly docker_image_tag
-    log_to_stdout "Argument 'docker_image_tag' = ${docker_image_tag}"
+    log_to_stdout "Argument 'docker_image_tag' = ${docker_image_tag}" "${c_arg}"
   fi
 
   # Removing an image by <name>:<tag>.
@@ -347,10 +500,10 @@ function docker_image_remove_by_name_tag() {
     log_to_stdout "Docker image '${docker_image_name}:${docker_image_tag}' already exists."
     docker_image_remove "${docker_image_name}:${docker_image_tag}"
   else
-    log_to_stdout "Docker image '${docker_image_name}:${docker_image_tag}' not found. Continue." 'G'
+    log_to_stdout "Docker image '${docker_image_name}:${docker_image_tag}' not found. Continue." "${c_ok}"
   fi
 
-  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
+  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' "${c_se}"
 }
 
 #######################################
@@ -362,7 +515,7 @@ function docker_image_remove_by_name_tag() {
 function docker_login_to_registry() {
   echo ''
   log_to_stdout 'Login to Docker image registry...'
-  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
+  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' "${c_se}"
 
   # Checking function arguments.
   if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
@@ -372,7 +525,7 @@ function docker_login_to_registry() {
     local docker_registry
     docker_registry=$1
     readonly docker_registry
-    log_to_stdout "Argument 'docker_registry' = ${docker_registry}"
+    log_to_stdout "Argument 'docker_registry' = ${docker_registry}" "${c_arg}"
   fi
 
   if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
@@ -382,18 +535,18 @@ function docker_login_to_registry() {
     local docker_user_name
     docker_user_name=$2
     readonly docker_user_name
-    log_to_stdout "Argument 'docker_user_name' = ${docker_user_name}"
+    log_to_stdout "Argument 'docker_user_name' = ${docker_user_name}" "${c_arg}"
   fi
 
-  log_to_stdout 'Use your personal or technical account with registry access privileges.' 'C'
+  log_to_stdout 'Use your personal or technical account with registry access privileges.' "${c_w}"
   if ! docker login -u "${docker_user_name}" "${docker_registry}/${docker_user_name}"; then
     log_to_stderr 'Login failed. Exit'
     exit 1
   else
-    log_to_stdout 'Login succeeded. Continue.' 'G'
+    log_to_stdout 'Login succeeded. Continue.' "${c_ok}"
   fi
 
-  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
+  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' "${c_se}"
 }
 
 #######################################
@@ -406,7 +559,7 @@ function docker_login_to_registry() {
 #######################################
 function docker_push_image_to_registry() {
   echo ''
-  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
+  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' "${c_se}"
   log_to_stdout 'Tagging and pushing a Docker image to a private registry...'
 
   # Checking function arguments.
@@ -417,7 +570,7 @@ function docker_push_image_to_registry() {
     local docker_registry
     docker_registry=$1
     readonly docker_registry
-    log_to_stdout "Argument 'docker_registry' = ${docker_registry}"
+    log_to_stdout "Argument 'docker_registry' = ${docker_registry}" "${c_arg}"
   fi
 
   if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
@@ -427,7 +580,7 @@ function docker_push_image_to_registry() {
     local docker_user_name
     docker_user_name=$2
     readonly docker_user_name
-    log_to_stdout "Argument 'docker_user_name' = ${docker_user_name}"
+    log_to_stdout "Argument 'docker_user_name' = ${docker_user_name}" "${c_arg}"
   fi
 
   if [ -z "$3" ] || [ "$3" = '' ] || [[ "$3" = *' '* ]] ; then
@@ -437,7 +590,7 @@ function docker_push_image_to_registry() {
     local docker_image_name
     docker_image_name=$3
     readonly docker_image_name
-    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}"
+    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}" "${c_arg}"
   fi
 
   if [ -z "$4" ] || [ "$4" = '' ] || [[ "$4" = *' '* ]] ; then
@@ -447,7 +600,7 @@ function docker_push_image_to_registry() {
     local docker_image_tag
     docker_image_tag=$4
     readonly docker_image_tag
-    log_to_stdout "Argument 'docker_image_tag' = ${docker_image_tag}"
+    log_to_stdout "Argument 'docker_image_tag' = ${docker_image_tag}" "${c_arg}"
   fi
 
   # Tag an image for a private registry.
@@ -459,7 +612,7 @@ function docker_push_image_to_registry() {
     log_to_stderr 'Tagging failed. Exit.'
     exit 1
   else
-    log_to_stdout 'Tagging succeeded. Continue.' 'G'
+    log_to_stdout 'Tagging succeeded. Continue.' "${c_ok}"
   fi
 
   # Push image to private registry.
@@ -470,10 +623,10 @@ function docker_push_image_to_registry() {
     log_to_stderr 'Pushing failed. Exit.'
     exit 1
   else
-    log_to_stdout 'Pushing succeeded. Continue.' 'G'
+    log_to_stdout 'Pushing succeeded. Continue.' "${c_ok}"
   fi
 
-  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
+  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' "${c_se}"
 }
 
 #######################################
@@ -483,7 +636,7 @@ function docker_push_image_to_registry() {
 #######################################
 function docker_stop_and_remove_containers_by_name() {
   echo ''
-  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
+  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' "${c_se}"
   log_to_stdout 'Stopping and removing containers with a name equal to the image name...'
 
   # Checking function arguments.
@@ -494,7 +647,7 @@ function docker_stop_and_remove_containers_by_name() {
     local docker_image_name
     docker_image_name=$1
     readonly docker_image_name
-    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}"
+    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}" "${c_arg}"
   fi
 
   # Get a list of containers with a name equal to the name of the image.
@@ -513,10 +666,10 @@ function docker_stop_and_remove_containers_by_name() {
       fi
     done
   else
-    log_to_stdout "There are no containers named '${docker_image_name}'. Continue." 'G'
+    log_to_stdout "There are no containers named '${docker_image_name}'. Continue." "${c_ok}"
   fi
 
-  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
+  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' "${c_se}"
 }
 
 #######################################
@@ -527,7 +680,7 @@ function docker_stop_and_remove_containers_by_name() {
 #######################################
 function docker_stop_and_remove_containers_by_ancestor() {
   echo ''
-  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
+  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' "${c_se}"
   log_to_stdout 'Stopping and removing containers created from the <name>:<tag>...'
 
   # Checking function arguments.
@@ -538,7 +691,7 @@ function docker_stop_and_remove_containers_by_ancestor() {
     local docker_image_name
     docker_image_name=$1
     readonly docker_image_name
-    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}"
+    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}" "${c_arg}"
   fi
 
   if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
@@ -548,7 +701,7 @@ function docker_stop_and_remove_containers_by_ancestor() {
     local docker_image_tag
     docker_image_tag=$2
     readonly docker_image_tag
-    log_to_stdout "Argument 'docker_image_tag' = ${docker_image_tag}"
+    log_to_stdout "Argument 'docker_image_tag' = ${docker_image_tag}" "${c_arg}"
   fi
 
   # Get a list of containers created based on the specified image.
@@ -567,10 +720,10 @@ function docker_stop_and_remove_containers_by_ancestor() {
       fi
     done
   else
-    log_to_stdout "There are no containers running from the '${docker_image_name}:${docker_image_tag}'. Continue." 'G'
+    log_to_stdout "There are no containers running from the '${docker_image_name}:${docker_image_tag}'. Continue." "${c_ok}"
   fi
 
-  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
+  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' "${c_se}"
 }
 
 #######################################
@@ -580,7 +733,7 @@ function docker_stop_and_remove_containers_by_ancestor() {
 #######################################
 function docker_create_user_defined_bridge_network() {
   echo ''
-  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
+  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' "${c_se}"
   log_to_stdout 'Creating user-defined bridge network...'
 
   # Checking function arguments.
@@ -591,168 +744,55 @@ function docker_create_user_defined_bridge_network() {
     local docker_image_name
     docker_image_name=$1
     readonly docker_image_name
-    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}"
+    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}" "${c_arg}"
   fi
 
   # Checking if such a network already exists.
   if [ "$(docker network ls -q -f "name=${docker_image_name}-net")" ]; then
-    log_to_stdout "Docker network '${docker_image_name}-net' already exists. Continue." 'G'
+    log_to_stdout "Docker network '${docker_image_name}-net' already exists. Continue." "${c_ok}"
   else
     # Creation of a Docker network.
     if ! docker network create --driver bridge "${docker_image_name}"-net; then
       log_to_stderr 'Error creating user-defined bridge network. Exit.'
       exit 1
     else
-      log_to_stdout "The user-defined bridge network '${docker_image_name}-net' has been created. Continue." 'G'
+      log_to_stdout "The user-defined bridge network '${docker_image_name}-net' has been created. Continue." "${c_ok}"
     fi
   fi
 
-  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
+  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' "${c_se}"
 }
 
 #######################################
-# Synchronize the project's virtual environment with the specified requirements files.
-# Arguments:
-#   req_compiled_file_full_path: Required. The full path to the compiled dependency file, with which to sync.
-#   project_root: Optional. If specified, will additionally sync with `01_app_requirements.txt`.
-#######################################
-function sync_venv_with_specified_requirements_files() {
-  echo ''
-  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
-  log_to_stdout "Synchronizing the project's virtual environment with the specified requirements files..."
-
-  # Checking function arguments.
-  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
-    log_to_stderr "Argument 'req_compiled_file_full_path' was not specified in the function call. Exit."
-    exit 1
-  else
-    local req_compiled_file_full_path
-    req_compiled_file_full_path=$1
-    readonly req_compiled_file_full_path
-    log_to_stdout "Argument requirements file 1 = ${req_compiled_file_full_path}"
-  fi
-
-  if [ -n "$2" ] ; then
-    local project_root
-    project_root=$2
-    readonly project_root
-    log_to_stdout "Argument requirements file 2 = ${project_root}/requirements/compiled/01_app_requirements.txt"
-
-    if ! pip-sync \
-        "${project_root}/requirements/compiled/01_app_requirements.txt" \
-        "${req_compiled_file_full_path}"; then
-      log_to_stderr 'Virtual environment synchronization error. Exit.'
-      exit 1
-    fi
-
-  else
-
-    if ! pip-sync "${req_compiled_file_full_path}"; then
-      log_to_stderr 'Virtual environment synchronization error. Exit.'
-      exit 1
-    fi
-
-  fi
-
-  log_to_stdout "The project virtual environment was successfully synchronized with the specified requirements files."
-  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
-}
-
-#######################################
-# Activate the project's virtual environment.
+# Definition of global variables for all library functions.
 # Globals:
-#   PWD
+#   c_arg
+#   c_ok
+#   c_se
+#   c_w
 # Arguments:
-#   venv_scripts_dir_full_path: Full path to the virtual environment scripts directory (depends on OS type).
+#  None
 #######################################
-function activate_virtual_environment() {
-  echo ''
-  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
-  log_to_stdout "Activating the project's virtual environment..."
+function main() {
+  # 1. Declaring Local Variables.
+  local stdout_text_color_func_args
+  readonly stdout_text_color_func_args='Y'  # change color if necessary
 
-  # Checking function arguments.
-  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
-    log_to_stderr "Argument 'venv_scripts_dir_full_path' was not specified in the function call. Exit."
-    exit 1
-  else
-    local venv_scripts_dir_full_path
-    venv_scripts_dir_full_path=$1
-    readonly venv_scripts_dir_full_path
-    log_to_stdout "Argument 'venv_scripts_dir_full_path' = ${venv_scripts_dir_full_path}"
-  fi
+  local stdout_text_color_ok
+  readonly stdout_text_color_ok='G'  # change color if necessary
 
-  # Change to the directory with venv scripts.
-  cd "${venv_scripts_dir_full_path}" || exit 1
-  log_to_stdout "Current PWD: '${PWD}'."
+  local stdout_text_color_start_end
+  readonly stdout_text_color_start_end='Bl'  # change color if necessary
 
-  # venv activation.
-  if ! source activate; then
-    log_to_stderr 'Virtual environment activation error. Exit.'
-    exit 1
-  else
-    log_to_stdout 'Virtual environment successfully activated. Continue.' 'G'
-    log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
-  fi
+  local stdout_text_color_warning
+  readonly stdout_text_color_warning='C'  # change color if necessary
+
+  # 2. Attention! Declaring Global Variables.
+  # Variables are redefined with short names to save space on lines.
+  readonly c_arg="${stdout_text_color_func_args}"
+  readonly c_ok="${stdout_text_color_ok}"
+  readonly c_se="${stdout_text_color_start_end}"
+  readonly c_w="${stdout_text_color_warning}"
 }
 
-#######################################
-# Copy a file from the specified branch of the remote Git repo to the script directory.
-# Globals:
-#   PWD
-# Arguments:
-#  remote_git_repo
-#  branch_name
-#  path_to_file
-#######################################
-function copy_file_from_remote_git_repo() {
-  echo ''
-  log_to_stdout '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>' 'Bl'
-  log_to_stdout 'Paths to the file in the target directory are preserved during copying.' 'C'
-
-  # Checking function arguments.
-  if [ -z "$1" ] || [ "$1" = '' ] || [[ "$1" = *' '* ]] ; then
-    log_to_stderr "Argument 'remote_git_repo' was not specified in the function call. Exit."
-    exit 1
-  else
-    local remote_git_repo
-    remote_git_repo=$1
-    readonly remote_git_repo
-    log_to_stdout "Argument 'remote_git_repo' = ${remote_git_repo}"
-  fi
-
-  if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
-    log_to_stderr "Argument 'branch_name' was not specified in the function call. Exit."
-    exit 1
-  else
-    local branch_name
-    branch_name=$2
-    readonly branch_name
-    log_to_stdout "Argument 'branch_name' = ${branch_name}"
-  fi
-
-  if [ -z "$3" ] || [ "$3" = '' ] || [[ "$3" = *' '* ]] ; then
-    log_to_stderr "Argument 'path_to_file' was not specified in the function call. Exit."
-    exit 1
-  else
-    local path_to_file
-    path_to_file=$3
-    readonly path_to_file
-    log_to_stdout "Argument 'path_to_file' = ${path_to_file}"
-  fi
-
-  # Copying.
-  log_to_stdout "Copying '${path_to_file}' file from remote Git repository '${remote_git_repo}'..."
-  if ! git archive \
-      --remote="${remote_git_repo}" \
-      --verbose \
-      "${branch_name}" \
-      "${path_to_file}" | tar -x; then
-    log_to_stderr "Error copying '${path_to_file}' from '${remote_git_repo}'. Contact the maintainer. Exit."
-    exit 1
-  else
-    log_to_stdout "'${path_to_file}' file successfully copied from '${remote_git_repo}'." 'G'
-    log_to_stdout "Current PWD: '${PWD}'."
-  fi
-
-  log_to_stdout '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<' 'Bl'
-}
+main "$@"
