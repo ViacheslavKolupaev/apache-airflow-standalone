@@ -33,3 +33,4 @@
 # Allow files and folders with a pattern starting with `!`.
 !pip.conf
 !requirements.txt
+!.airflowignore
