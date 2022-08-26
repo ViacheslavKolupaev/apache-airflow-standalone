@@ -95,7 +95,7 @@ function docker_run_standalone_airflow_in_container() {
     local docker_image_name
     docker_image_name=$1
     readonly docker_image_name
-    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}"
+    log_to_stdout "Argument 'docker_image_name' = ${docker_image_name}" 'Y'
   fi
 
   if [ -z "$2" ] || [ "$2" = '' ] || [[ "$2" = *' '* ]] ; then
@@ -105,7 +105,7 @@ function docker_run_standalone_airflow_in_container() {
     local docker_image_tag
     docker_image_tag=$2
     readonly docker_image_tag
-    log_to_stdout "Argument 'docker_image_tag' = ${docker_image_tag}"
+    log_to_stdout "Argument 'docker_image_tag' = ${docker_image_tag}" 'Y'
   fi
 
   if [ -z "$3" ] || [ "$3" = '' ] || [[ "$3" = *' '* ]] ; then
@@ -115,7 +115,7 @@ function docker_run_standalone_airflow_in_container() {
     local airflow_dags_dir
     airflow_dags_dir=$3
     readonly airflow_dags_dir
-    log_to_stdout "Argument 'airflow_dags_dir' = ${airflow_dags_dir}"
+    log_to_stdout "Argument 'airflow_dags_dir' = ${airflow_dags_dir}" 'Y'
   fi
 
   # Starting an image-based container and executing the specified command in it.
