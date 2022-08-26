@@ -29,7 +29,7 @@
 # The Apache Airflow web server will be available at: http://127.0.0.1:8081/.
 # For authorization use login `admin` and password `admin`.
 #
-# A directory `airflow_dags_dir` with DAG files from the host will be mounted to the
+# A directory `project_root` with DAG files from the host will be mounted to the
 # container. Thus, if adding or changes to the DAG file, you do not need to rebuild the
 # image and restart the container.
 #
@@ -43,7 +43,7 @@
 # 3. Restart container with this script.
 #
 # If necessary, you need to replace the values of the variables in the `main()` function:
-# - `airflow_dags_dir`;
+# - `project_root`;
 # - `airflow_version`;
 # - `python_base_image`;
 # - `docker_image_name`;
@@ -80,7 +80,7 @@ function update_library_of_common_bash_functions() {
 # Arguments:
 #   docker_image_name
 #   docker_image_tag
-#   airflow_dags_dir
+#   project_root
 #######################################
 function docker_run_standalone_airflow_in_container() {
   echo ''
@@ -109,13 +109,13 @@ function docker_run_standalone_airflow_in_container() {
   fi
 
   if [ -z "$3" ] || [ "$3" = '' ] || [[ "$3" = *' '* ]] ; then
-    log_to_stderr "Argument 'airflow_dags_dir' was not specified in the function call. Exit."
+    log_to_stderr "Argument 'project_root' was not specified in the function call. Exit."
     exit 1
   else
-    local airflow_dags_dir
-    airflow_dags_dir=$3
-    readonly airflow_dags_dir
-    log_to_stdout "Argument 'airflow_dags_dir' = ${airflow_dags_dir}" 'Y'
+    local project_root
+    project_root=$3
+    readonly project_root
+    log_to_stdout "Argument 'project_root' = ${project_root}" 'Y'
   fi
 
   # Starting an image-based container and executing the specified command in it.
@@ -133,9 +133,11 @@ function docker_run_standalone_airflow_in_container() {
     --memory-reservation=3g \
     --memory=4g \
     --memory-swap=5g \
-    --mount type=bind,source="${airflow_dags_dir}",target=/opt/airflow/dags,readonly `# In Windows OS in WSL 1 mode,
-    # you must first add the 'airflow_dags_dir' in the 'File sharing' section of the Docker Desktop settings.
+    `# In Windows OS in WSL 1 mode, you must first add the 'project_root' in the
+    # 'File sharing' section of the Docker Desktop settings.
     # See documentation: https://docs.docker.com/desktop/windows/#file-sharing` \
+    --mount type=bind,source="${project_root}/dags",target=/opt/airflow/dags,readonly \
+    --mount type=bind,source="${project_root}/common_package",target=/opt/airflow/common_package,readonly \
     --privileged=false  `# Be careful when enabling this option! Potentially unsafe.
     # The container can then do almost everything that the host can do.` \
     --health-cmd='python --version || exit 1' \
@@ -173,9 +175,9 @@ function main() {
   local docker_user_name
   readonly docker_user_name='vkolupaev'
 
-  local airflow_dags_dir
-  airflow_dags_dir="${HOME}/PycharmProjects/apache-airflow-standalone/dags"  # change the path if necessary
-  readonly airflow_dags_dir
+  local project_root
+  project_root="${HOME}/PycharmProjects/apache-airflow-standalone"  # change the path if necessary
+  readonly project_root
 
   local airflow_version
   readonly airflow_version="2.2.4"  # change if necessary
@@ -211,7 +213,7 @@ function main() {
   docker_run_standalone_airflow_in_container \
     "${docker_image_name}" \
     "${docker_image_tag}" \
-    "${airflow_dags_dir}"
+    "${project_root}"
 
   log_to_stdout 'END OF SCRIPT EXECUTION.' 'Bl'
 }
