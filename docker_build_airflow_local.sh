@@ -142,6 +142,7 @@ function docker_build_standalone_airflow_image() {
   # See about `DOCKER_BUILDKIT`: https://github.com/moby/moby/issues/34151#issuecomment-739018493
   # See about `DOCKER_SCAN_SUGGEST`: https://github.com/docker/scan-cli-plugin/issues/149#issuecomment-823969364
   if ! DOCKER_BUILDKIT=1 DOCKER_SCAN_SUGGEST=false docker build \
+       --progress=plain \
        --pull \
        --file "${dockerfile_dir}/Dockerfile" \
        --build-arg VCS_REF="${git_rev_short_sha}" \
