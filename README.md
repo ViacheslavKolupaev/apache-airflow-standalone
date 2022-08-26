@@ -4,6 +4,9 @@ apache-airflow-standalone
 ![GitLab License](https://img.shields.io/gitlab/license/vkolupaev/apache-airflow-standalone?color=informational)
 ![GitLab tag (latest by SemVer)](https://img.shields.io/gitlab/v/tag/vkolupaev/apache-airflow-standalone)
 ![Python](https://img.shields.io/static/v1?label=Python&message=3.8&color=informational&logo=python&logoColor=white)
+[![Docker Pulls](
+https://img.shields.io/docker/pulls/vkolupaev/apache-airflow-standalone?color=informational&logo=docker&logoColor=white
+)](https://hub.docker.com/r/vkolupaev/apache-airflow-standalone)
 
 ## What is this repository?
 This is a repository with bash scripts and auxiliary files for building a Docker image and running a Docker container
