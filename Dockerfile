@@ -59,17 +59,17 @@ USER root
 #    net-tools \
 #    less \
 #    telnet \
-#    vim\
+#    nvim\
 #    mc \
 #    openjdk-11-jre-headless \
 #  && apt-get autoremove -yqq --purge \
 #  && apt-get clean \
 #  && rm -rf /var/lib/apt/lists/*
 
-USER airflow
+#USER airflow
 
 # For `apache-spark` to work.
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+#ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 
 # Prevents Python from writing pyc files to disk.
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -77,11 +77,12 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # `pip` configuration befor installing dependencies.
-COPY --chown=airflow:root pip.conf pip.conf
+COPY pip.conf pip.conf
 ENV PIP_CONFIG_FILE pip.conf
 
 # Install Python dependencies.
-COPY --chown=airflow:root ./requirements.txt .
-RUN --mount=type=cache,mode=0755,target=/root/.cache/pip \
+COPY ./requirements.txt .
+# Docs: https://docs.docker.com/engine/reference/builder/#run---mounttypecache
+RUN --mount=type=cache,mode=0755,target=/root/.cache/pip/ \
     pip install --upgrade pip \
     && pip install -r requirements.txt
