@@ -20,8 +20,9 @@
 # Not suitable for production environment. Use it for local development and testing only!
 ##########################################################################################
 
-# See dockerfile syntax tags here: https://hub.docker.com/r/docker/dockerfile
-# syntax = docker/dockerfile:1.4
+# Dockerfile syntax definition. Required to mount package manager cache directories.
+# See Dockerfile syntax tags here: https://hub.docker.com/r/docker/dockerfile
+# syntax=docker/dockerfile:1
 
 ########
 # BUILD
