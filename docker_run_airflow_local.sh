@@ -26,7 +26,7 @@
 #
 # The container is automatically deleted when it is stopped.
 #
-# The Apache Airflow web server will be available at: http://127.0.0.1:8080/.
+# The Apache Airflow web server will be available at: http://127.0.0.1:8081/.
 # For authorization use login `admin` and password `admin`.
 #
 # A directory `airflow_dags_dir` with DAG files from the host will be mounted to the
@@ -128,7 +128,7 @@ function docker_run_standalone_airflow_in_container() {
     --log-driver=local `# https://docs.docker.com/config/containers/logging/local/` \
     --log-opt mode=non-blocking \
     --network="${docker_image_name}"-net \
-    --publish 8080:8080 \
+    --publish 8081:8080 \
     --cpus="2" \
     --memory-reservation=3g \
     --memory=4g \
