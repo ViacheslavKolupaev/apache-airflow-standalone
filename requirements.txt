@@ -29,3 +29,4 @@ ujson
 # Airflow Providers
 # apache-airflow-providers-apache-spark
 apache-airflow-providers-http==3.0.0
+apache-airflow-providers-docker
