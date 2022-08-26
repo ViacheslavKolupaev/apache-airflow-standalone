@@ -16,13 +16,27 @@
 
 """
 ###  001_example_dag
-Maintainer: Viacheslav Kolupaev
+DAG solves the problem of launching a Docker container with an application.
+
+Several options are available:
+
+1. `BashOperator`;
+2. `SimpleHttpOperator`;
+3. `DockerOperator`.
+
+Brief comments on the implementation of each option are provided in the comments on the
+tasks in the DAG code.
 
 If you need to add or remove some package (dependency) for Apache Airflow, then you
 need to:
+
 1. Make changes to the `requirements.txt` file.
 2. Rebuild the image using the `docker_build_airflow_local.sh` script.
 3. Restart container using the `docker_run_airflow_local.sh` script.
+
+Maintainer: [Viacheslav Kolupaev](
+https://vkolupaev.com/?utm_source=dag_docs&utm_medium=link&utm_campaign=airflow-standalone
+)
 """
 
 from datetime import timedelta
@@ -33,11 +47,13 @@ from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.providers.docker.operators.docker import DockerOperator
+from airflow.providers.http.operators.http import SimpleHttpOperator
 
 from common_package import common_module
 
 with DAG(
-    # `airflow.models.dag`: https://airflow.apache.org/docs/apache-airflow/2.3.1/_api/airflow/models/dag/index.html#airflow.models.dag.DAG
+    # `airflow.models.dag`:
+    # https://airflow.apache.org/docs/apache-airflow/2.3.1/_api/airflow/models/dag/index.html#airflow.models.dag.DAG
     dag_id='001_example_dag',
     description='Example DAG.',
 
@@ -93,7 +109,9 @@ with DAG(
 ) as dag:
     dag.doc_md = __doc__  # providing that you have a docstring at the beginning of the DAG
 
+    ######################################################################################
     # Getting environment variables: Airflow UI → Admin → Variables.
+    ######################################################################################
     private_environment = {
         'APP_API_ACCESS_HTTP_BEARER_TOKEN': Variable.get(
             key='APP_API_ACCESS_HTTP_BEARER_TOKEN',
@@ -126,23 +144,58 @@ with DAG(
     all_environment = private_environment
     all_environment.update(non_private_environment)
 
-    # t1, t2 and t3 are examples of tasks created by instantiating operators
-
+    ######################################################################################
     # OPTION 1.
-    # Running a container using a bash script.
+    # Running a Docker container using `BashOperator`.
+    ######################################################################################
     t1 = BashOperator(
-        task_id='t1_run_bash_operator',
+        task_id='t1_run_container_using_bash_operator',
         dag=dag,
         bash_command='pip freeze',
         env=all_environment,
         #append_env=False,  # the argument is missing from previous versions of the operator.
     )
 
+    ######################################################################################
     # OPTION 2.
-    # Running a container using `airflow.providers.docker.operators.docker`.
-    # There is no argument to publish a container on some port.
-    t2 = DockerOperator(
-        task_id='t2_run_container_using_docker_operator',
+    # Running a container with `SimpleHttpOperator` by triggering a pipeline in Jenkins.
+    #
+    # To do this, you can use `Generic Webhook Trigger` plugin for Jenkins:
+    #   https://github.com/jenkinsci/generic-webhook-trigger-plugin
+    #
+    # Before creating a DAG, you must first do the following:
+    # 1. Create a secret for the token in Jenkins.
+    # 2. Add a `GenericTrigger` trigger to `Jenkinsfile` using a token, see example:
+    #    https://gitlab.com/vkolupaev/notebook/-/blob/main/Jenkinsfile
+    # 3. Create Connection for Jenkins agent here: Airflow UI → Admin → Connections.
+    #    Specify the token in the `Extra` field: {
+    #       "Content-Type": "application/json",
+    #       "Authorization": "Bearer your-generic-webhook-trigger-plugin-token"
+    #    }
+    ######################################################################################
+    t2 = SimpleHttpOperator(
+        task_id='t2_run_container_using_simple_http_operator',
+        dag=dag,
+        endpoint='generic-webhook-trigger/invoke',
+        method='POST',
+        data=None,
+        headers=None,
+        http_conn_id="jenkins_local_api_default",  # Airflow UI → Admin → Connections.
+        log_response=True,
+    )
+
+    ######################################################################################
+    # OPTION 3.
+    # Running a Docker container using `DockerOperator`.
+    #
+    # The disadvantages of this method:
+    # 1. There is no argument to publish a container on some port.
+    # 2. Environment variables are created centrally in Airflow UI → Admin → Variables.
+    #    For example, it is not possible to create one `DB_PASSWORD` variable with
+    #    different passwords for use in different containers.
+    ######################################################################################
+    t3 = DockerOperator(
+        task_id='t3_run_container_using_docker_operator',
         dag=dag,
         image='boilerplate:latest',
         api_version='auto',
