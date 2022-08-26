@@ -1,18 +1,18 @@
-##########################################################################################
+# ########################################################################################
 #  Copyright 2022 Viacheslav Kolupaev; author's website address:
 #
-#   https://vkolupaev.com/?utm_source=c&utm_medium=link&utm_campaign=airflow-standalone
+#     https://vkolupaev.com/?utm_source=c&utm_medium=link&utm_campaign=airflow-standalone
 #
-# Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
-# file except in compliance with the License. You may obtain a copy of the License at
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+#  file except in compliance with the License. You may obtain a copy of the License at
 #
-#   https://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software distributed under
-# the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied. See the License for the specific language governing
-# permissions and limitations under the License.
-##########################################################################################
+#  Unless required by applicable law or agreed to in writing, software distributed under
+#  the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied. See the License for the specific language governing
+#  permissions and limitations under the License.
+# ########################################################################################
 
 """
 ###  001_example_dag
@@ -20,9 +20,9 @@ Maintainer: Viacheslav Kolupaev
 
 If you need to add or remove some package (dependency) for Apache Airflow, then you
 need to:
-    1. Make changes to the `requirements.txt` file.
-    2. Rebuild the image using the `docker_build_airflow_local.sh` script.
-    3. Restart container using the `docker_run_airflow_local.sh` script.
+1. Make changes to the `requirements.txt` file.
+2. Rebuild the image using the `docker_build_airflow_local.sh` script.
+3. Restart container using the `docker_run_airflow_local.sh` script.
 """
 
 from datetime import timedelta
@@ -34,32 +34,7 @@ from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.providers.docker.operators.docker import DockerOperator
 
-
-def sla_callback(dag, task_list, blocking_task_list, slas, blocking_tis) -> None:
-    """Run SLA callback.
-
-    Use this function for the `sla_miss_callback` argument.
-    Docs: https://airflow.apache.org/docs/apache-airflow/stable/concepts/tasks.html#sla-miss-callback
-    """
-    print(
-        "The callback arguments are: ",
-        {
-            "dag": dag,
-            "task_list": task_list,
-            "blocking_task_list": blocking_task_list,
-            "slas": slas,
-            "blocking_tis": blocking_tis,
-        },
-    )
-
-def task_failure_alert(context) -> None:
-    print(f"Task has failed, task_instance_key_str: {context['task_instance_key_str']}")
-
-def task_success_alert(context) -> None:
-    print(f"Task has succeeded, task_instance_key_str: {context['task_instance_key_str']}")
-
-def dag_success_alert(context) -> None:
-    print(f"DAG has succeeded, run_id: {context['run_id']}")
+from common_package import common_module
 
 with DAG(
     # `airflow.models.dag`: https://airflow.apache.org/docs/apache-airflow/2.3.1/_api/airflow/models/dag/index.html#airflow.models.dag.DAG
@@ -98,10 +73,10 @@ with DAG(
         'execution_timeout': timedelta(minutes=6),
 
         # Callbacks: https://airflow.apache.org/docs/apache-airflow/stable/logging-monitoring/callbacks.html
-        'on_failure_callback': task_failure_alert,
-        'on_success_callback': task_success_alert,
+        'on_failure_callback': common_module.task_failure_alert,
+        'on_success_callback': common_module.task_success_alert,
         'on_retry_callback': None,
-        'sla_miss_callback': sla_callback,
+        'sla_miss_callback': common_module.sla_callback,
     },
     max_active_tasks=1,
     max_active_runs=1,
@@ -111,14 +86,14 @@ with DAG(
     catchup=False,
     doc_md=None,
     params=None,
-    sla_miss_callback=sla_callback,
+    sla_miss_callback=common_module.sla_callback,
     tags=['vkolupaev', 'docker', 'boilerplate'],
 
 
 ) as dag:
     dag.doc_md = __doc__  # providing that you have a docstring at the beginning of the DAG
 
-    # Getting environment variables.
+    # Getting environment variables: Airflow UI → Admin → Variables.
     private_environment = {
         'APP_API_ACCESS_HTTP_BEARER_TOKEN': Variable.get(
             key='APP_API_ACCESS_HTTP_BEARER_TOKEN',
@@ -206,7 +181,7 @@ with DAG(
         retrieve_output=False,
         retrieve_output_path=None,
         # device_requests=None,  # the argument is missing from previous versions of the operator.
-        on_success_callback=dag_success_alert,
+        on_success_callback=common_module.dag_success_alert,
     )
 
     # t1 for t2 — upstream; t2 for t1 — downstream.
