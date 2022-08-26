@@ -14,17 +14,17 @@
 # permissions and limitations under the License.
 ##########################################################################################
 
+
 ##########################################################################################
 # `.dockerignore` to build a standalone Apache Airflow Docker image.
 #
 # Not suitable for production environment. Use it for local development and testing only!
 #
-# Where to place this file: https://github.com/moby/buildkit/releases/tag/dockerfile%2F1.1.0
-# Docs: https://docs.docker.com/engine/reference/builder/#dockerignore-file
+# Where to place this file:
+#   https://github.com/moby/buildkit/releases/tag/dockerfile%2F1.1.0
 #
-# Basic patterns:
-# - `!file` — exclude from context.
-# - `*!file` — include in context.
+# Docs:
+#   https://docs.docker.com/engine/reference/builder/#dockerignore-file
 ##########################################################################################
 
 # Ignore everything.
