@@ -14,19 +14,22 @@
 # permissions and limitations under the License.
 ##########################################################################################
 
+
 ##########################################################################################
 # Dockerfile to build standalone Apache Airflow Docker image.
 #
 # Not suitable for production environment. Use it for local development and testing only!
+#
+# Docs: https://docs.docker.com/engine/reference/builder/
 ##########################################################################################
 
 # Dockerfile syntax definition. Required to mount package manager cache directories.
 # See Dockerfile syntax tags here: https://hub.docker.com/r/docker/dockerfile
 # syntax=docker/dockerfile:1
 
-########
-# BUILD
-########
+##########################################################################################
+# STAGE 1: BUILD
+##########################################################################################
 
 # Pull official base image.
 # See available Apache Airflow tags here: https://hub.docker.com/r/apache/airflow/tags
