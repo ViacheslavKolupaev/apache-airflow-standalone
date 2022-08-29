@@ -38,8 +38,10 @@ Maintainer: [Viacheslav Kolupaev](
 https://vkolupaev.com/?utm_source=dag_docs&utm_medium=link&utm_campaign=airflow-standalone
 )
 """
-
+import re
 from datetime import timedelta
+from textwrap import dedent
+from typing import Dict
 
 import pendulum
 
@@ -50,6 +52,99 @@ from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.providers.http.operators.http import SimpleHttpOperator
 
 from common_package import common_module
+
+
+def get_private_environment() -> Dict[str, str]:
+    return {
+        'APP_API_ACCESS_HTTP_BEARER_TOKEN': Variable.get(
+            key='APP_API_ACCESS_HTTP_BEARER_TOKEN',
+            default_var=None,
+            deserialize_json=False,
+        ),
+        'DB_PASSWORD': Variable.get(
+            key='DB_PASSWORD',
+            default_var=None,
+            deserialize_json=False,
+        ),
+    }
+
+def get_non_private_environment() -> Dict[str, str]:
+    return {
+        'JENKINS_AGENT_URL': Variable.get(
+            key='JENKINS_AGENT_URL',
+            default_var=None,
+            deserialize_json=False,
+        ),
+        'GWT_TOKEN': Variable.get(
+            key='GWT_TOKEN',
+            default_var=None,
+            deserialize_json=False,
+        ),
+        'GWT_BRANCH_NAME': Variable.get(
+            key='GWT_BRANCH_NAME',
+            default_var=None,
+            deserialize_json=False,
+        ),
+        'APP_ENV_STATE': Variable.get(
+            key='APP_ENV_STATE',
+            default_var=None,
+            deserialize_json=False,
+        ),
+        'DB_USER': Variable.get(
+            key='DB_USER',
+            default_var=None,
+            deserialize_json=False,
+        ),
+        'IS_DEBUG': Variable.get(
+            key='IS_DEBUG',
+            default_var=None,
+            deserialize_json=False,
+        ),
+    }
+def get_all_environment() -> Dict[str, str]:
+    ######################################################################################
+    # Getting environment variables: Airflow UI → Admin → Variables.
+    ######################################################################################
+    private_environment = get_private_environment()
+    non_private_environment = get_non_private_environment()
+
+    all_environment = private_environment
+    all_environment.update(non_private_environment)
+
+    # Attention! Check expected types in statements. For example, `BashOperator` expects
+    # the following type: `env: Optional[Dict[str, str]] = None`.
+    # If you pass a dictionary {"key": None} to the operator, then there will be an error.
+    # Therefore, it is necessary to filter the dictionary from keys with empty values.
+    filtered = {k: v for k, v in all_environment.items() if v is not None}
+    all_environment.clear()
+    all_environment.update(filtered)
+
+    return all_environment
+
+def get_bash_command(all_environment: Dict[str, str]) -> str:
+    generic_webhook_trigger_url = (
+        '{jenkins_agent_url}/generic-webhook-trigger/invoke?' +
+        'token={gwt_token}' +
+        '&branch_name={gwt_branch_name}'
+    ).format(
+        jenkins_agent_url=all_environment.get('JENKINS_AGENT_URL'),
+        gwt_token=all_environment.get('GWT_TOKEN'),
+        gwt_branch_name=all_environment.get('GWT_BRANCH_NAME'),
+    )
+
+    bash_command = dedent(
+        # `curl` docs: https://curl.se/docs/manpage.html
+        """
+        curl \
+        -X POST \
+        -H 'Content-Type: application/json' \
+        {generic_webhook_trigger_url}
+        """.format(generic_webhook_trigger_url=generic_webhook_trigger_url)
+    )
+    bash_command = re.sub(' +', ' ', bash_command)
+
+    return bash_command.strip()
+
 
 with DAG(
     # `airflow.models.dag`:
@@ -109,51 +204,34 @@ with DAG(
 ) as dag:
     dag.doc_md = __doc__  # providing that you have a docstring at the beginning of the DAG
 
-    ######################################################################################
-    # Getting environment variables: Airflow UI → Admin → Variables.
-    ######################################################################################
-    private_environment = {
-        'APP_API_ACCESS_HTTP_BEARER_TOKEN': Variable.get(
-            key='APP_API_ACCESS_HTTP_BEARER_TOKEN',
-            default_var=None,
-            deserialize_json=False,
-        ),
-        'DB_PASSWORD': Variable.get(
-            key='DB_PASSWORD',
-            default_var=None,
-            deserialize_json=False,
-        ),
-    }
-    non_private_environment = {
-        'APP_ENV_STATE': Variable.get(
-            key='APP_ENV_STATE',
-            default_var=None,
-            deserialize_json=False,
-        ),
-        'DB_USER': Variable.get(
-            key='DB_USER',
-            default_var=None,
-            deserialize_json=False,
-        ),
-        'IS_DEBUG': Variable.get(
-            key='IS_DEBUG',
-            default_var=None,
-            deserialize_json=False,
-        ),
-    }
-    all_environment = private_environment
-    all_environment.update(non_private_environment)
+    all_environment = get_all_environment()
 
     ######################################################################################
     # OPTION 1.
     # Running a Docker container using `BashOperator`.
     ######################################################################################
     t1 = BashOperator(
-        task_id='t1_run_container_using_bash_operator',
+        task_id='t1_print_env',
         dag=dag,
-        bash_command='pip freeze',
+        bash_command='printenv',
         env=all_environment,
-        #append_env=False,  # the argument is missing from previous versions of the operator.
+        # append_env=False,  # the argument is missing from previous versions of the operator.
+    )
+
+    t2 = BashOperator(
+        task_id='t2_print_app_env_state',
+        dag=dag,
+        bash_command="echo ${APP_ENV_STATE}",
+        env=all_environment,
+        # append_env=False,  # the argument is missing from previous versions of the operator.
+    )
+
+    t3 = BashOperator(
+        task_id='t3_execute_curl',
+        dag=dag,
+        bash_command=get_bash_command(all_environment=all_environment),
+        env=all_environment,
+        # append_env=False,  # the argument is missing from previous versions of the operator.
     )
 
     ######################################################################################
@@ -173,8 +251,8 @@ with DAG(
     #       "Authorization": "Bearer your-generic-webhook-trigger-plugin-token"
     #    }
     ######################################################################################
-    t2 = SimpleHttpOperator(
-        task_id='t2_run_container_using_simple_http_operator',
+    t4 = SimpleHttpOperator(
+        task_id='t4_run_container_using_simple_http_operator',
         dag=dag,
         endpoint='generic-webhook-trigger/invoke',
         method='POST',
@@ -194,8 +272,8 @@ with DAG(
     #    For example, it is not possible to create one `DB_PASSWORD` variable with
     #    different passwords for use in different containers.
     ######################################################################################
-    t3 = DockerOperator(
-        task_id='t3_run_container_using_docker_operator',
+    t5 = DockerOperator(
+        task_id='t5_run_container_using_docker_operator',
         dag=dag,
         image='boilerplate:latest',
         api_version='auto',
@@ -205,8 +283,8 @@ with DAG(
         # Default for Linux = 'unix:///var/run/docker.sock'
         # Check: `curl --unix-socket /var/run/docker.sock http:/localhost/version`
         docker_url='unix:///var/run/docker.sock',
-        environment=non_private_environment,
-        private_environment=private_environment,
+        environment=get_non_private_environment(),
+        private_environment=get_private_environment(),
         force_pull=False,
         mem_limit='200m',
         host_tmp_dir=None,
@@ -238,4 +316,4 @@ with DAG(
     )
 
     # t1 for t2 — upstream; t2 for t1 — downstream.
-    t1 >> t2
+    t1 >> t2 >> t3
