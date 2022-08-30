@@ -1,0 +1,11 @@
+# pip install pip-tools
+# pip-compile dev_requirements.in --output-file=- > dev_requirements.txt
+# pip-sync requirements.txt dev_requirements.txt
+
+pre-commit >= 2.20.0
+isort >= 5.10.1
+black >= 22.6.0
+mypy == 0.931
+wemake-python-styleguide >= 0.16.1
+nitpick >= 0.32.0
+bandit >= 1.7.4
