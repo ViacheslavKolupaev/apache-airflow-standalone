@@ -1,0 +1,45 @@
+# ########################################################################################
+#  Copyright 2022 Viacheslav Kolupaev; author's website address:
+#
+#     https://vkolupaev.com/?utm_source=c&utm_medium=link&utm_campaign=airflow-standalone
+#
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+#  file except in compliance with the License. You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software distributed under
+#  the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+#  KIND, either express or implied. See the License for the specific language governing
+#  permissions and limitations under the License.
+# ########################################################################################
+
+
+##########################################################################################
+# Requirements file for adding Python packages to the Airflow Standalone Docker image.
+#
+# Not suitable for production environment. Use it for local development and testing only!
+#
+# Usage:
+#
+#   pip install --upgrade pip-tools
+#   pip-compile requirements.in --output-file=- > requirements.txt
+#   pip-sync requirements.txt
+#
+# To update, run:
+#
+#    pip-compile --output-file=- requirements.in
+##########################################################################################
+
+pandas
+numpy
+pydantic[dotenv] >= 1.9.1
+typeguard >= 2.13.3
+pendulum
+orjson >= 3.7.7
+ujson
+
+# Airflow Providers
+# apache-airflow-providers-apache-spark
+apache-airflow-providers-http==3.0.0
+apache-airflow-providers-docker
