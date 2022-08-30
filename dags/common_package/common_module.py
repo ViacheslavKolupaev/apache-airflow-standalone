@@ -17,8 +17,9 @@
 
 """This module contains common helper classes and functions for Airflow DAGs."""
 
-from typing import Dict, Any
+from typing import Any, Dict, Final
 
+DAG_ID_COMMON_PREFIX: Final[str] = 'personal'
 
 def sla_callback(dag, task_list, blocking_task_list, slas, blocking_tis) -> None:
     """Run SLA callback.
