@@ -17,6 +17,9 @@
 
 """This module contains common helper classes and functions for Airflow DAGs."""
 
+from typing import Dict, Any
+
+
 def sla_callback(dag, task_list, blocking_task_list, slas, blocking_tis) -> None:
     """Run SLA callback.
 
@@ -42,3 +45,18 @@ def task_success_alert(context) -> None:
 
 def dag_success_alert(context) -> None:
     print(f"DAG has succeeded, run_id: {context['run_id']}")
+
+def filter_dict_from_keys_with_none_values(dict_to_filter: Dict[str, Any]) -> Dict[Any, Any]:
+    """Filter the dictionary for keys with `None` values.
+
+    Attention! Check expected types in statements. For example, `BashOperator` expects
+    the following type: `env: Optional[Dict[str, str]] = None`.
+    If you pass a dictionary {"key": None} to the operator, then there will be an error.
+
+    Therefore, it is necessary to filter the dictionary from keys with empty values.
+    """
+    filtered = {k: v for k, v in dict_to_filter.items() if v is not None}
+    dict_to_filter.clear()
+    dict_to_filter.update(filtered)
+
+    return dict_to_filter
