@@ -137,7 +137,6 @@ function docker_run_standalone_airflow_in_container() {
     # 'File sharing' section of the Docker Desktop settings.
     # See documentation: https://docs.docker.com/desktop/windows/#file-sharing` \
     --mount type=bind,source="${project_root}/dags",target=/opt/airflow/dags,readonly \
-    --mount type=bind,source="${project_root}/common_package",target=/opt/airflow/common_package,readonly \
     --privileged=false  `# Be careful when enabling this option! Potentially unsafe.
     # The container can then do almost everything that the host can do.` \
     --health-cmd='python --version || exit 1' \
