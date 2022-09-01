@@ -262,6 +262,7 @@ celerybeat.pid
 backup/.env
 .env
 .env.*
+env_airflow.json
 .venv
 env/
 venv/
