@@ -14,7 +14,9 @@
 #  permissions and limitations under the License.
 # ########################################################################################
 
-"""
+
+"""DAG module with task code examples of different ways to run a Docker container.
+
 ###  001_example_dag
 DAG solves the problem of launching a Docker container with an application.
 
@@ -38,37 +40,41 @@ Maintainer: [Viacheslav Kolupaev](
 https://vkolupaev.com/?utm_source=dag_docs&utm_medium=link&utm_campaign=airflow-standalone
 )
 """
-import re
 from datetime import timedelta
-from textwrap import dedent
 from typing import Dict
 
 import pendulum
-
 from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
-from airflow.providers.docker.operators.docker import DockerOperator
-from airflow.providers.http.operators.http import SimpleHttpOperator
+from airflow.providers.docker.operators.docker import DockerOperator  # type: ignore[import]
+from airflow.providers.http.operators.http import SimpleHttpOperator  # type: ignore[import]
+from common_package import common_module  # type: ignore[import]
 
-from common_package import common_module
 
-
-def get_private_environment() -> Dict[str, str]:
-    return {
-        'APP_API_ACCESS_HTTP_BEARER_TOKEN': Variable.get(
-            key='APP_API_ACCESS_HTTP_BEARER_TOKEN',
-            default_var=None,
-            deserialize_json=False,
-        ),
-        'DB_PASSWORD': Variable.get(
-            key='DB_PASSWORD',
-            default_var=None,
-            deserialize_json=False,
-        ),
-    }
-
+##########################################################################################
+# Helper functions for DAG.
+##########################################################################################
 def get_non_private_environment() -> Dict[str, str]:
+    """Get `non_private_environment`.
+
+    `non_private_environment` is used in the signatures of some Airflow methods.
+
+    Note:
+        For example, in a `airflow.providers.docker.operators.docker`:
+        1. `environment` (Optional[Dict]) – Environment variables to set in the container.
+        2. `private_environment` (Optional[Dict]) – Private environment variables to set
+        in the container. These are not templated, and hidden from the website.
+
+        Therefore, such a separation is required.
+
+    Returns:
+        A dictionary with the values of the Airflow variables specified in this function.
+
+        If there is no variable with the specified name in Airflow, then the value of the
+        key will be `None`.
+
+    """
     return {
         'JENKINS_AGENT_URL': Variable.get(
             key='JENKINS_AGENT_URL',
@@ -101,27 +107,63 @@ def get_non_private_environment() -> Dict[str, str]:
             deserialize_json=False,
         ),
     }
+
+
+def get_private_environment() -> Dict[str, str]:
+    """Get `private_environment`.
+
+    `private_environment` is used in the signatures of some Airflow methods.
+
+    Note:
+        For example, in a `airflow.providers.docker.operators.docker`:
+        1. `environment` (Optional[Dict]) – Environment variables to set in the container.
+        2. `private_environment` (Optional[Dict]) – Private environment variables to set
+        in the container. These are not templated, and hidden from the website.
+
+        Therefore, such a separation is required.
+
+    Returns:
+        A dictionary with the values of the Airflow variables specified in this function.
+
+        If there is no variable with the specified name in Airflow, then the value of the
+        key will be `None`.
+
+    """
+    return {
+        'APP_API_ACCESS_HTTP_BEARER_TOKEN': Variable.get(
+            key='APP_API_ACCESS_HTTP_BEARER_TOKEN',
+            default_var=None,
+            deserialize_json=False,
+        ),
+        'DB_PASSWORD': Variable.get(
+            key='DB_PASSWORD',
+            default_var=None,
+            deserialize_json=False,
+        ),
+    }
+
+
 def get_all_environment() -> Dict[str, str]:
-    ######################################################################################
-    # Getting environment variables: Airflow UI → Admin → Variables.
-    ######################################################################################
+    """Get a dictionary with all Airflow variables.
+
+    Airflow variables are set here: Airflow UI → Admin → Variables.
+
+    Returns:
+        The returned dictionary is the union of the `private_environment` and
+        `non_private_environment` dictionaries.
+
+    """
     private_environment = get_private_environment()
     non_private_environment = get_non_private_environment()
 
     all_environment = private_environment
     all_environment.update(non_private_environment)
 
-    # Attention! Check expected types in statements. For example, `BashOperator` expects
-    # the following type: `env: Optional[Dict[str, str]] = None`.
-    # If you pass a dictionary {"key": None} to the operator, then there will be an error.
-    # Therefore, it is necessary to filter the dictionary from keys with empty values.
-    filtered = {k: v for k, v in all_environment.items() if v is not None}
-    all_environment.clear()
-    all_environment.update(filtered)
-
     return all_environment
 
-def get_bash_command(all_environment: Dict[str, str]) -> str:
+
+def get_bash_command_sending_curl_to_jenkins(all_environment: Dict[str, str]) -> str:
+    """Get custom bash command sending `curl` request to Jenkins."""
     generic_webhook_trigger_url = (
         '{jenkins_agent_url}/generic-webhook-trigger/invoke?' +
         'token={gwt_token}' +
@@ -132,50 +174,50 @@ def get_bash_command(all_environment: Dict[str, str]) -> str:
         gwt_branch_name=all_environment.get('GWT_BRANCH_NAME'),
     )
 
-    bash_command = dedent(
-        # `curl` docs: https://curl.se/docs/manpage.html
-        """
-        curl \
-        -X POST \
-        -H 'Content-Type: application/json' \
-        {generic_webhook_trigger_url}
-        """.format(generic_webhook_trigger_url=generic_webhook_trigger_url)
-    )
-    bash_command = re.sub(' +', ' ', bash_command)
-
-    return bash_command.strip()
+    # `curl` docs: https://curl.se/docs/manpage.html
+    return (
+        'curl' +
+        ' -X POST' +
+        ' -H "Content-Type: application/json"' +
+        '{generic_webhook_trigger_url}'
+    ).format(generic_webhook_trigger_url=generic_webhook_trigger_url)
 
 
+##########################################################################################
+# DAG.
+##########################################################################################
 with DAG(
     # `airflow.models.dag`:
     # https://airflow.apache.org/docs/apache-airflow/2.3.1/_api/airflow/models/dag/index.html#airflow.models.dag.DAG
-    dag_id='001_example_dag',
+    dag_id='{dag_id_common_prefix}_001_example_dag'.format(
+        dag_id_common_prefix=common_module.DAG_ID_COMMON_PREFIX,
+    ),
     description='Example DAG.',
-
     # Cron Presets: https://airflow.apache.org/docs/apache-airflow/stable/dag-run.html#cron-presets
     schedule_interval='*/15 * * * *',
-
     timetable=None,
-
     # Data Interval: https://airflow.apache.org/docs/apache-airflow/stable/dag-run.html#data-interval
-    start_date=pendulum.datetime(year=2022, month=5, day=31, tz="UTC"),
+    start_date=pendulum.datetime(year=2022, month=5, day=31, tz='UTC'),  # noqa: WPS432
     end_date=None,
 
-    # These args will get passed on to each operator
-    # You can override them on a per-task basis during operator initialization
+    # These args will get passed on to each operator. You can override them on a per-task
+    # basis during operator initialization.
+    #
+    # Docs: https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html#default-arguments
+    #
+    # `airflow.models.baseoperator` signature:
+    #     https://airflow.apache.org/docs/apache-airflow/stable/_api/airflow/models/baseoperator/index.html
     default_args={
-        'depends_on_past': False,
-        'email': ['airflow@example.com'],
+        'owner': 'Viacheslav Kolupaev',
+
+        'email': ['email-to-send-alerts@airflow-example.com'],
         'email_on_failure': False,
         'email_on_retry': False,
+
         'retries': 0,
-        'retry_delay': timedelta(minutes=5),
-        'trigger_rule': 'always',
-        # 'queue': 'bash_queue',
-        # 'pool': 'backfill',
-        # 'priority_weight': 10,
-        # 'end_date': datetime(2016, 1, 1),
-        # 'wait_for_downstream': False,
+        'retry_delay': timedelta(seconds=5 * 60),
+        'depends_on_past': False,
+        'wait_for_downstream': False,
 
         # Only scheduled tasks will be checked against SLA.
         # Manually triggered tasks will not invoke an SLA miss.
@@ -185,9 +227,14 @@ with DAG(
 
         # Callbacks: https://airflow.apache.org/docs/apache-airflow/stable/logging-monitoring/callbacks.html
         'on_failure_callback': common_module.task_failure_alert,
-        'on_success_callback': common_module.task_success_alert,
+        'on_execute_callback': None,
         'on_retry_callback': None,
+        'on_success_callback': common_module.task_success_alert,
         'sla_miss_callback': common_module.sla_callback,
+        'pre_execute': None,
+        'post_execute': None,
+
+        'trigger_rule': 'always',
     },
     max_active_tasks=1,
     max_active_runs=1,
@@ -199,12 +246,14 @@ with DAG(
     params=None,
     sla_miss_callback=common_module.sla_callback,
     tags=['vkolupaev', 'docker', 'boilerplate'],
-
-
 ) as dag:
-    dag.doc_md = __doc__  # providing that you have a docstring at the beginning of the DAG
+    dag.doc_md = (
+        __doc__  # providing that you have a docstring at the beginning of the DAG
+    )
 
-    all_environment = get_all_environment()
+    all_environment = common_module.filter_dict_from_keys_with_none_values(
+        dict_to_filter=get_all_environment(),
+    )
 
     ######################################################################################
     # OPTION 1.
@@ -215,23 +264,25 @@ with DAG(
         dag=dag,
         bash_command='printenv',
         env=all_environment,
-        # append_env=False,  # the argument is missing from previous versions of the operator.
+        append_env=False,
     )
 
     t2 = BashOperator(
         task_id='t2_print_app_env_state',
         dag=dag,
-        bash_command="echo ${APP_ENV_STATE}",
+        bash_command='echo ${APP_ENV_STATE}',
         env=all_environment,
-        # append_env=False,  # the argument is missing from previous versions of the operator.
+        append_env=False,
     )
 
     t3 = BashOperator(
         task_id='t3_execute_curl',
         dag=dag,
-        bash_command=get_bash_command(all_environment=all_environment),
+        bash_command=get_bash_command_sending_curl_to_jenkins(
+            all_environment=all_environment,
+        ),
         env=all_environment,
-        # append_env=False,  # the argument is missing from previous versions of the operator.
+        append_env=False,
     )
 
     ######################################################################################
@@ -246,10 +297,8 @@ with DAG(
     # 2. Add a `GenericTrigger` trigger to `Jenkinsfile` using a token, see example:
     #    https://gitlab.com/vkolupaev/notebook/-/blob/main/Jenkinsfile
     # 3. Create Connection for Jenkins agent here: Airflow UI → Admin → Connections.
-    #    Specify the token in the `Extra` field: {
-    #       "Content-Type": "application/json",
-    #       "Authorization": "Bearer your-generic-webhook-trigger-plugin-token"
-    #    }
+    #    Specify the token in the `Extra` field:
+    #  {"Authorization": "Bearer your-generic-webhook-trigger-plugin-token"}  # noqa: E800
     ######################################################################################
     t4 = SimpleHttpOperator(
         task_id='t4_run_container_using_simple_http_operator',
@@ -258,7 +307,7 @@ with DAG(
         method='POST',
         data=None,
         headers=None,
-        http_conn_id="jenkins_local_api_default",  # Airflow UI → Admin → Connections.
+        http_conn_id='jenkins_local_api_default',  # Airflow UI → Admin → Connections.
         log_response=True,
     )
 
@@ -295,7 +344,6 @@ with DAG(
         tls_hostname=None,
         tls_ssl_version=None,
         mount_tmp_dir=False,
-        tmp_dir='/tmp/airflow',
         user=None,
         mounts=None,
         entrypoint=None,
@@ -304,14 +352,14 @@ with DAG(
         docker_conn_id=None,
         dns=None,
         dns_search=None,
-        auto_remove=True,
+        auto_remove='success',
         shm_size=None,
         tty=False,
         privileged=False,
         cap_add=None,
         retrieve_output=False,
         retrieve_output_path=None,
-        # device_requests=None,  # the argument is missing from previous versions of the operator.
+        device_requests=None,  # the argument is missing from previous versions of the operator.
         on_success_callback=common_module.dag_success_alert,
     )
 
