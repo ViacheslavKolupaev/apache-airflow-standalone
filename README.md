@@ -19,6 +19,24 @@ Software versions:
 
 ⚠️**Not suitable for production environment. Use it for local development and testing only!**
 
+## To whom and how can it be useful?
+An `Apache Airflow` running in a Docker container can be useful to a Data Engineer or any other engineer who
+develops DAG scripts.
+
+In a real workflow, only very simple DAGs can be developed 100% correctly the first time. Usually you have to make a
+few additional changes to fix the detected errors.
+
+This leads to the following consequences:
+1. The git history of the `TEST` repository with DAG includes `Work in progress (WIP)` and debug commits. It could
+   also be 1 commit, and 50. It all depends on the task. _Junk commits make git history difficult to navigate._
+2. If `TEST` already has another task ready or almost ready for deployment to `PROD` Pull Request, then _it will be
+   blocked until you're done with debug_. This increases the time-to-market.
+
+Therefore, it is possible to take out development of DAG to the maximum in `DEV`-environment. This will allow you to
+commit to the `TEST` repository with the code project already more or less tested solutions.
+
+That's what `apache-airflow-standalone` is for.
+
 ---
 
 Copyright 2022 [Viacheslav Kolupaev](
