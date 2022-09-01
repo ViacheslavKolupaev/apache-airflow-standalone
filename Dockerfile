@@ -66,23 +66,19 @@ USER root
 #  && apt-get clean \
 #  && rm -rf /var/lib/apt/lists/*
 
-#USER airflow
-
-# For `apache-spark` to work.
-#ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-
 # Prevents Python from writing pyc files to disk.
 ENV PYTHONDONTWRITEBYTECODE 1
 # Prevents Python from buffering stdout and stderr.
 ENV PYTHONUNBUFFERED 1
 
+USER airflow
+
 # `pip` configuration befor installing dependencies.
-COPY pip.conf pip.conf
+COPY --chown=airflow:root pip.conf pip.conf
 ENV PIP_CONFIG_FILE pip.conf
 
 # Install Python dependencies.
-COPY ./requirements.txt .
-# Docs: https://docs.docker.com/engine/reference/builder/#run---mounttypecache
-RUN --mount=type=cache,mode=0755,target=/root/.cache/pip/ \
+COPY --chown=airflow:root ./requirements.txt .
+RUN --mount=type=cache,mode=0755,target=~/.cache/pip \
     pip install --upgrade pip \
     && pip install -r requirements.txt
