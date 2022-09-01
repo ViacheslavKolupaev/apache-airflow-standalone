@@ -17,18 +17,18 @@
 
 """DAG module with task code examples of different ways to run a Docker container.
 
-###  dag_001_example
-DAG solves the problem of launching a Docker container with an application.
-
-Several options are available:
+#### Ways to run a Docker container
+The task of launching a Docker container with an application can be solved in several
+ways:
 
 1. Running a container with `BashOperator` by triggering a pipeline in Jenkins.
 2. Running a container with `SimpleHttpOperator` by triggering a pipeline in Jenkins.
 3. Running a Docker container using `DockerOperator`.
 
-Brief comments on the implementation of each option are provided in the comments on the
-tasks in the DAG code.
+_Brief comments on the implementation of each option are provided in the comments on the
+tasks in the DAG code._
 
+#### Adding Airflow operators and Python packages for DAG
 If you need to add or remove some package (dependency) for Apache Airflow, then you
 need to:
 
@@ -36,7 +36,8 @@ need to:
 2. Rebuild the image using the `docker_build_airflow_local.sh` script.
 3. Restart container using the `docker_run_airflow_local.sh` script.
 
-Maintainer: [Viacheslav Kolupaev](
+#### Maintainer
+[Viacheslav Kolupaev](
 https://vkolupaev.com/?utm_source=dag_docs&utm_medium=link&utm_campaign=airflow-standalone
 )
 """
@@ -76,6 +77,7 @@ def get_non_private_environment() -> Dict[str, str]:
 
     """
     return {
+        # Variables for doing `curl` towards `Generic Webhook Trigger` plugin for Jenkins.
         'JENKINS_AGENT_URL': Variable.get(
             key='JENKINS_AGENT_URL',
             default_var=None,
@@ -192,7 +194,7 @@ def get_bash_command_sending_curl_to_jenkins(all_environment: Dict[str, str]) ->
 with DAG(
     # `airflow.models.dag`:
     # https://airflow.apache.org/docs/apache-airflow/2.3.1/_api/airflow/models/dag/index.html#airflow.models.dag.DAG
-    dag_id='{dag_id_common_prefix}_001_example_dag'.format(
+    dag_id='{dag_id_common_prefix}_dag001_example'.format(
         dag_id_common_prefix=common_module.DAG_ID_COMMON_PREFIX,
     ),
     description='Example DAG.',
