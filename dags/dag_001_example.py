@@ -17,14 +17,14 @@
 
 """DAG module with task code examples of different ways to run a Docker container.
 
-###  001_example_dag
+###  dag_001_example
 DAG solves the problem of launching a Docker container with an application.
 
 Several options are available:
 
-1. `BashOperator`;
-2. `SimpleHttpOperator`;
-3. `DockerOperator`.
+1. Running a container with `BashOperator` by triggering a pipeline in Jenkins.
+2. Running a container with `SimpleHttpOperator` by triggering a pipeline in Jenkins.
+3. Running a Docker container using `DockerOperator`.
 
 Brief comments on the implementation of each option are provided in the comments on the
 tasks in the DAG code.
@@ -91,6 +91,8 @@ def get_non_private_environment() -> Dict[str, str]:
             default_var=None,
             deserialize_json=False,
         ),
+
+        # Variables to pass to `DockerOperator`.
         'APP_ENV_STATE': Variable.get(
             key='APP_ENV_STATE',
             default_var=None,
@@ -130,6 +132,7 @@ def get_private_environment() -> Dict[str, str]:
 
     """
     return {
+        # Variables to pass to `DockerOperator`.
         'APP_API_ACCESS_HTTP_BEARER_TOKEN': Variable.get(
             key='APP_API_ACCESS_HTTP_BEARER_TOKEN',
             default_var=None,
@@ -257,26 +260,25 @@ with DAG(
 
     ######################################################################################
     # OPTION 1.
-    # Running a Docker container using `BashOperator`.
+    #
+    # Running a container with `BashOperator` by triggering a pipeline in Jenkins.
+    #
+    # The task sends a POST request to Jenkins using `curl`.
+    #
+    # To do this, you can use `Generic Webhook Trigger` plugin for Jenkins:
+    #   https://github.com/jenkinsci/generic-webhook-trigger-plugin
+    #
+    # Before creating a DAG, you must first do the following:
+    # 1. Create a secret for the token in Jenkins.
+    # 2. Add a `GenericTrigger` trigger to `Jenkinsfile` using a token, see example:
+    #    https://gitlab.com/vkolupaev/notebook/-/blob/main/Jenkinsfile
+    # 3. Create the following variables in Airflow:
+    #    a) `JENKINS_AGENT_URL`
+    #    b) `GWT_TOKEN`
+    #    c) `GWT_BRANCH_NAME`.
     ######################################################################################
     t1 = BashOperator(
-        task_id='t1_print_env',
-        dag=dag,
-        bash_command='printenv',
-        env=all_environment,
-        append_env=False,
-    )
-
-    t2 = BashOperator(
-        task_id='t2_print_app_env_state',
-        dag=dag,
-        bash_command='echo ${APP_ENV_STATE}',
-        env=all_environment,
-        append_env=False,
-    )
-
-    t3 = BashOperator(
-        task_id='t3_execute_curl',
+        task_id='t1_run_container_by_triggering_a_jenkins_pipeline',
         dag=dag,
         bash_command=get_bash_command_sending_curl_to_jenkins(
             all_environment=all_environment,
@@ -287,6 +289,7 @@ with DAG(
 
     ######################################################################################
     # OPTION 2.
+    #
     # Running a container with `SimpleHttpOperator` by triggering a pipeline in Jenkins.
     #
     # To do this, you can use `Generic Webhook Trigger` plugin for Jenkins:
@@ -300,8 +303,8 @@ with DAG(
     #    Specify the token in the `Extra` field:
     #  {"Authorization": "Bearer your-generic-webhook-trigger-plugin-token"}  # noqa: E800
     ######################################################################################
-    t4 = SimpleHttpOperator(
-        task_id='t4_run_container_using_simple_http_operator',
+    t2 = SimpleHttpOperator(
+        task_id='t2_run_container_using_simple_http_operator',
         dag=dag,
         endpoint='generic-webhook-trigger/invoke',
         method='POST',
@@ -313,6 +316,7 @@ with DAG(
 
     ######################################################################################
     # OPTION 3.
+    #
     # Running a Docker container using `DockerOperator`.
     #
     # The disadvantages of this method:
@@ -321,8 +325,8 @@ with DAG(
     #    For example, it is not possible to create one `DB_PASSWORD` variable with
     #    different passwords for use in different containers.
     ######################################################################################
-    t5 = DockerOperator(
-        task_id='t5_run_container_using_docker_operator',
+    t3 = DockerOperator(
+        task_id='t3_run_container_using_docker_operator',
         dag=dag,
         image='boilerplate:latest',
         api_version='auto',
@@ -363,5 +367,9 @@ with DAG(
         on_success_callback=common_module.dag_success_alert,
     )
 
+    ######################################################################################
+    # Set the order in which tasks are to be executed.
+    #
     # t1 for t2 — upstream; t2 for t1 — downstream.
-    t1 >> t2 >> t3
+    ######################################################################################
+    t1  # noqa: WPS428
