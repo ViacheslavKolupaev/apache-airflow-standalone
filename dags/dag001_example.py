@@ -46,6 +46,7 @@ from typing import Dict
 
 import pendulum
 from airflow import DAG
+from airflow.exceptions import AirflowFailException
 from airflow.models import Variable
 from airflow.operators.bash import BashOperator
 from airflow.providers.docker.operators.docker import DockerOperator  # type: ignore[import]
@@ -279,6 +280,13 @@ with DAG(
     #    b) `GWT_TOKEN`
     #    c) `GWT_BRANCH_NAME`.
     ######################################################################################
+    if (
+        all_environment.get('JENKINS_AGENT_URL') is None
+        or all_environment.get('GWT_TOKEN') is None
+        or all_environment.get('GWT_BRANCH_NAME') is None
+    ):
+        raise AirflowFailException
+
     t1 = BashOperator(
         task_id='t1_run_container_by_triggering_a_jenkins_pipeline',
         dag=dag,
@@ -306,13 +314,14 @@ with DAG(
     #  {"Authorization": "Bearer your-generic-webhook-trigger-plugin-token"}  # noqa: E800
     ######################################################################################
     t2 = SimpleHttpOperator(
+        trigger_rule='all_failed',
         task_id='t2_run_container_using_simple_http_operator',
         dag=dag,
         endpoint='generic-webhook-trigger/invoke',
         method='POST',
         data=None,
         headers=None,
-        http_conn_id='jenkins_local_api_default',  # Airflow UI → Admin → Connections.
+        http_conn_id='connection_to_jenkins',  # Airflow UI → Admin → Connections.
         log_response=True,
     )
 
@@ -328,6 +337,7 @@ with DAG(
     #    different passwords for use in different containers.
     ######################################################################################
     t3 = DockerOperator(
+        trigger_rule='all_failed',
         task_id='t3_run_container_using_docker_operator',
         dag=dag,
         image='boilerplate:latest',
@@ -374,4 +384,4 @@ with DAG(
     #
     # t1 for t2 — upstream; t2 for t1 — downstream.
     ######################################################################################
-    t1  # noqa: WPS428
+    t1 >> t2 >> t3 # noqa: WPS428
