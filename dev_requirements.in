@@ -29,8 +29,12 @@
 #   pip-sync requirements.txt dev_requirements.txt
 #
 # To update, run:
-#
+
 #    pip-compile --output-file=- dev_requirements.in
+#
+# After installing the Python packages, manually install the `mypy` stubs:
+#
+#    mypy --install-types
 ##########################################################################################
 
 -c requirements.txt
