@@ -184,7 +184,7 @@ def get_bash_command_sending_curl_to_jenkins(all_environment: Dict[str, str]) ->
         'curl' +
         ' -X POST' +
         ' -H "Content-Type: application/json"' +
-        '{generic_webhook_trigger_url}'
+        ' {generic_webhook_trigger_url}'
     ).format(generic_webhook_trigger_url=generic_webhook_trigger_url)
 
 
