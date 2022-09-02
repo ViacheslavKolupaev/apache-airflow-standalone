@@ -42,7 +42,7 @@ https://vkolupaev.com/?utm_source=dag_docs&utm_medium=link&utm_campaign=airflow-
 )
 """
 from datetime import timedelta
-from typing import Dict
+from typing import Dict, Optional, Union
 
 import pendulum
 from airflow import DAG
@@ -57,7 +57,7 @@ from common_package import common_module  # type: ignore[import]
 ##########################################################################################
 # Helper functions for DAG.
 ##########################################################################################
-def get_non_private_environment() -> Dict[str, str]:
+def get_non_private_environment() -> Dict[str, Optional[Union[str, int, bool]]]:
     """Get `non_private_environment`.
 
     `non_private_environment` is used in the signatures of some Airflow methods.
@@ -114,7 +114,7 @@ def get_non_private_environment() -> Dict[str, str]:
     }
 
 
-def get_private_environment() -> Dict[str, str]:
+def get_private_environment() -> Dict[str, Optional[Union[str, int, bool]]]:
     """Get `private_environment`.
 
     `private_environment` is used in the signatures of some Airflow methods.
@@ -149,7 +149,7 @@ def get_private_environment() -> Dict[str, str]:
     }
 
 
-def get_all_environment() -> Dict[str, str]:
+def get_all_environment() -> Dict[str, Optional[Union[str, int, bool]]]:
     """Get a dictionary with all Airflow variables.
 
     Airflow variables are set here: Airflow UI → Admin → Variables.
@@ -168,7 +168,9 @@ def get_all_environment() -> Dict[str, str]:
     return all_environment
 
 
-def get_bash_command_sending_curl_to_jenkins(all_environment: Dict[str, str]) -> str:
+def get_bash_command_sending_curl_to_jenkins(
+    all_environment: Dict[str, Optional[Union[str, int, bool]]],
+) -> str:
     """Get custom bash command sending `curl` request to Jenkins."""
     generic_webhook_trigger_url = (
         '{jenkins_agent_url}/generic-webhook-trigger/invoke?' +
@@ -251,7 +253,7 @@ with DAG(
     doc_md=None,
     params=None,
     sla_miss_callback=common_module.sla_callback,
-    tags=['vkolupaev', 'docker', 'boilerplate'],
+    tags=[common_module.DAG_ID_COMMON_PREFIX, 'vkolupaev', 'docker', 'boilerplate'],
 ) as dag:
     dag.doc_md = (
         __doc__  # providing that you have a docstring at the beginning of the DAG
