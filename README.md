@@ -1,12 +1,30 @@
-apache-airflow-standalone
+`apache-airflow-standalone`
 =======
 
-![GitLab License](https://img.shields.io/gitlab/license/vkolupaev/apache-airflow-standalone?color=informational)
-![GitLab tag (latest by SemVer)](https://img.shields.io/gitlab/v/tag/vkolupaev/apache-airflow-standalone)
-![Python](https://img.shields.io/static/v1?label=Python&message=3.8&color=informational&logo=python&logoColor=white)
-[![Docker Pulls](
+![GitLab License](
+https://img.shields.io/gitlab/license/vkolupaev/apache-airflow-standalone?color=informational
+)
+![GitLab tag (latest by SemVer)](
+https://img.shields.io/gitlab/v/tag/vkolupaev/apache-airflow-standalone?label=apache-airflow-standalone
+)
+![Python](
+https://img.shields.io/static/v1?label=Python&message=3.8&color=informational&logo=python&logoColor=white
+)
+![code style](
+https://img.shields.io/static/v1?label=code%20style&message=wemake-python-styleguide&color=informational
+)
+![mypy](
+https://img.shields.io/static/v1?label=mypy&message=checked&color=informational
+)
+![imports](
+https://img.shields.io/static/v1?label=imports&message=isort&color=informational
+)
+
+[//]: # "[![Docker Pulls](
 https://img.shields.io/docker/pulls/vkolupaev/apache-airflow-standalone?color=informational&logo=docker&logoColor=white
-)](https://hub.docker.com/r/vkolupaev/apache-airflow-standalone)
+)](https://hub.docker.com/r/vkolupaev/apache-airflow-standalone)"
+[//]: # "![GitLab stars](https://img.shields.io/gitlab/stars/vkolupaev/apache-airflow-standalone?style=social)"
+[//]: # "![GitHub Repo stars](https://img.shields.io/github/stars/ViacheslavKolupaev/apache-airflow-standalone?style=social)"
 
 ## What is this repository?
 This is a repository with bash scripts and auxiliary files for building a Docker image and running a Docker container
